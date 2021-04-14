@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"github.com/biningo/boil-gin/global"
 	"github.com/biningo/boil-gin/model"
-	"github.com/biningo/boil-gin/model/vo"
 	"github.com/biningo/boil-gin/utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -20,7 +19,7 @@ import "github.com/biningo/boil-gin/middleware"
 
 func Login(c *gin.Context) {
 	j := middleware.NewJwt()
-	userLoginVo := vo.UserLoginVo{}
+	userLoginVo := model.UserLoginVo{}
 	if err := c.ShouldBindJSON(&userLoginVo); err != nil {
 		c.JSON(400, gin.H{"msg": "输入信息不正确"})
 		return
@@ -62,7 +61,7 @@ func Logout(c *gin.Context) {
 }
 
 func Registry(c *gin.Context) {
-	user := vo.UserRegistryVo{}
+	user := model.UserRegistryVo{}
 	err := c.ShouldBindJSON(&user)
 	if err != nil {
 		c.JSON(400, gin.H{"msg": err.Error()})
