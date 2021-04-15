@@ -10,4 +10,4 @@ server:
   addr: localhost:8000
 jwt:
   secret: dsadsadsadsa
-  tokentime: 10
+  tokentime: 100

@@ -3,6 +3,7 @@ package initialize
 import (
 	"database/sql"
 	"github.com/biningo/boil-gin/global"
+	"time"
 )
 
 /**
@@ -27,6 +28,7 @@ func initMySql() *sql.DB {
 		DBName:    global.G_CONFIG.MySql.DB,
 		Collation: global.G_CONFIG.MySql.Collation,
 		ParseTime: true,
+		Loc:       time.Local,
 	})
 	db := sql.OpenDB(connector)
 	if err := db.Ping(); err != nil {
