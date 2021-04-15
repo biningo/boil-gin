@@ -1,6 +1,9 @@
 package utils
 
-import "math/rand"
+import (
+	"math/rand"
+	"time"
+)
 
 /**
 *@Author lyer
@@ -13,6 +16,7 @@ func RandInt(min int, max int) int {
 }
 
 func Rand5Str() string {
+	rand.Seed(time.Now().Unix())
 	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	b := make([]rune, 5)
 	for i := range b {

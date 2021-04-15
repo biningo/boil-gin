@@ -12,4 +12,5 @@ type User struct {
 	PassWord string
 	AvatarID int //[1,5]
 	Salt     string
+	Bio string
 }

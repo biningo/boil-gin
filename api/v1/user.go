@@ -7,6 +7,7 @@ import (
 	"github.com/biningo/boil-gin/utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"log"
 	"time"
 )
 import "github.com/biningo/boil-gin/middleware"
@@ -24,25 +25,26 @@ func Login(c *gin.Context) {
 		c.JSON(400, gin.H{"msg": "输入信息不正确"})
 		return
 	}
-
+	log.Println(userLoginVo)
 	db := global.G_DB
-	result, err := db.Query("select username,password,salt,avatar_id from boil_user where username=?", userLoginVo.UserName)
+	result, err := db.Query("select id,username,password,salt,avatar_id,bio from boil_user where username=?", userLoginVo.UserName)
 	if err != nil {
-		c.JSON(500, gin.H{"msg": "服务器错误"})
+		c.JSON(500, gin.H{"msg": "服务器错误1"})
 		return
 	}
 	if !result.Next() {
-		c.JSON(200, gin.H{"msg": "用户不存在"})
+		c.JSON(403, gin.H{"msg": "用户名或者密码错误1"})
 		return
 	}
-	userInfo := model.User{}
-	if err = result.Scan(&userInfo.UserName, &userInfo.PassWord, &userInfo.Salt, &userInfo.AvatarID); err != nil {
-		c.JSON(500, gin.H{"msg": "服务器错误"})
+	user := model.User{}
+	if err = result.Scan(&user.ID, &user.UserName, &user.PassWord, &user.Salt, &user.AvatarID, &user.Bio); err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
 		return
 	}
-	pwdToken := string(sha256.New().Sum([]byte(userLoginVo.PassWord + userInfo.Salt)))
-	if pwdToken != userInfo.PassWord {
-		c.JSON(403, gin.H{"msg": "密码错误"})
+	byteArr := sha256.Sum256([]byte(userLoginVo.PassWord + user.Salt))
+	pwdToken := string(byteArr[:])
+	if pwdToken != user.PassWord {
+		c.JSON(403, gin.H{"msg": "用户名或密码错误2"})
 		return
 	}
 	claims := &middleware.CustomClaims{
@@ -53,7 +55,9 @@ func Login(c *gin.Context) {
 		},
 	}
 	tokenString, _ := j.CreateToken(claims)
-	c.JSON(200, gin.H{"token": tokenString})
+
+	userInfo:=model.UserInfo{ID:user.ID,UserName: user.UserName,Bio: user.Bio,AvatarID: user.AvatarID}
+	c.JSON(200, gin.H{"data":userInfo,"token": tokenString})
 }
 
 func Logout(c *gin.Context) {
@@ -82,11 +86,14 @@ func Registry(c *gin.Context) {
 	}
 
 	salt := utils.Rand5Str()
-	pwd256Token := sha256.New().Sum([]byte(user.PassWord + salt))
+	pwd256Token := sha256.Sum256([]byte(user.PassWord + salt))
 	if user.AvatarID <= 0 || user.AvatarID > 5 {
 		user.AvatarID = utils.RandInt(1, 5)
 	}
-	_, err = db.Exec("insert into boil_user(username,password,avatar_id,salt) value(?,?,?,?)", user.UserName, pwd256Token, user.AvatarID, salt)
+	if user.Bio == "" {
+		user.Bio = "这个家伙很懒,什么也没留下"
+	}
+	_, err = db.Exec("insert into boil_user(username,password,avatar_id,salt,bio) value(?,?,?,?,?)", user.UserName, string(pwd256Token[:]), user.AvatarID, salt, user.Bio)
 	if err != nil {
 		c.JSON(500, gin.H{"msg": err.Error()})
 		return
@@ -102,5 +109,6 @@ func Registry(c *gin.Context) {
 		c.JSON(500, gin.H{"msg": err.Error()})
 		return
 	}
-	c.JSON(200, gin.H{"token": tokenString, "msg": "注册成功"})
+	user.PassWord = ""
+	c.JSON(200, gin.H{"data": user, "token": tokenString, "msg": "注册成功"})
 }
