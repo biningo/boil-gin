@@ -16,5 +16,7 @@ func InitUserRouter(Router *gin.RouterGroup) {
 		UserRouter.POST("/login", v1.Login)
 		UserRouter.GET("/logout", v1.Logout)
 		UserRouter.POST("/registry", v1.Registry)
+		UserRouter.GET("/status/:uid", v1.UserStatus)
+		UserRouter.POST("/update/bio/:uid", v1.UserUpdateBio)
 	}
 }

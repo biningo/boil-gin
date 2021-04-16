@@ -21,6 +21,7 @@ func InitRouter() *gin.Engine {
 		router.InitUserRouter(PublicGroup)
 		router.InitTagRouter(PublicGroup)
 		router.InitBoilRouter(PublicGroup)
+		router.InitCommentRouter(PublicGroup)
 	}
 
 	PrivateGroup := r.Group("")

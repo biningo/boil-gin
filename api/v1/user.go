@@ -7,7 +7,6 @@ import (
 	"github.com/biningo/boil-gin/utils"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
-	"log"
 	"time"
 )
 import "github.com/biningo/boil-gin/middleware"
@@ -25,7 +24,6 @@ func Login(c *gin.Context) {
 		c.JSON(400, gin.H{"msg": "输入信息不正确"})
 		return
 	}
-	log.Println(userLoginVo)
 	db := global.G_DB
 	result, err := db.Query("select id,username,password,salt,avatar_id,bio from boil_user where username=?", userLoginVo.UserName)
 	if err != nil {
@@ -56,8 +54,8 @@ func Login(c *gin.Context) {
 	}
 	tokenString, _ := j.CreateToken(claims)
 
-	userInfo:=model.UserInfo{ID:user.ID,UserName: user.UserName,Bio: user.Bio,AvatarID: user.AvatarID}
-	c.JSON(200, gin.H{"data":userInfo,"token": tokenString})
+	userInfo := model.UserInfo{ID: user.ID, UserName: user.UserName, Bio: user.Bio, AvatarID: user.AvatarID}
+	c.JSON(200, gin.H{"data": userInfo, "token": tokenString})
 }
 
 func Logout(c *gin.Context) {
@@ -111,4 +109,35 @@ func Registry(c *gin.Context) {
 	}
 	user.PassWord = ""
 	c.JSON(200, gin.H{"data": user, "token": tokenString, "msg": "注册成功"})
+}
+
+func UserStatus(c *gin.Context) {
+	uid := c.Param("uid")
+	userStatusVo := model.UserStatusVo{}
+	db := global.G_DB
+	result, _ := db.Query("select count(*) from boil_boil where user_id=?", uid)
+	result.Next()
+	result.Scan(&userStatusVo.UserBoilCount)
+
+	result, _ = db.Query("select count(*) from boil_comment where user_id=?", uid)
+	result.Next()
+	result.Scan(&userStatusVo.CommentCount)
+
+	result.Close()
+	c.JSON(200, gin.H{"data": userStatusVo})
+}
+
+func UserUpdateBio(c *gin.Context) {
+	uid := c.Param("uid")
+	bioVo := struct {
+		Bio string `json:"bio"`
+	}{}
+	c.ShouldBindJSON(&bioVo)
+	db := global.G_DB
+	_, err := db.Exec("update boil_user set bio=? where id=?", bioVo.Bio, uid)
+	if err != nil {
+		c.JSON(500, gin.H{"msg": "更新错误"})
+		return
+	}
+	c.JSON(200, gin.H{"msg": "更新成功!"})
 }

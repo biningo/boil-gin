@@ -13,8 +13,8 @@ import (
 func InitCommentRouter(Router *gin.RouterGroup) {
 	CommentRouter := Router.Group("/comment")
 	{
-		CommentRouter.POST("/publish", v1.CommentPublish)
-		CommentRouter.GET("/list/boil/:bid", v1.CommentBoilList)
-		CommentRouter.GET("/comment/:cid", v1.CommentCommentList)
+		CommentRouter.POST("/publish/:bid", v1.CommentPublish)
+		CommentRouter.GET("/list/:bid", v1.CommentBoilList)
+		CommentRouter.DELETE("/:cid",v1.CommentDelete)
 	}
 }

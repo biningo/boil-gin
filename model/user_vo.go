@@ -14,13 +14,21 @@ type UserLoginVo struct {
 type UserRegistryVo struct {
 	UserName string `json:"username"`
 	PassWord string `json:"password"`
-	AvatarID int `json:"avatarId"`
-	Bio string `json:"bio"`
+	AvatarID int    `json:"avatarId"`
+	Bio      string `json:"bio"`
 }
 
 type UserInfo struct {
-	ID int `json:"id"`
+	ID       int    `json:"id"`
 	UserName string `json:"username"`
-	Bio string `json:"bio"`
-	AvatarID int `json:"avatarId"`
+	Bio      string `json:"bio"`
+	AvatarID int    `json:"avatarId"`
+}
+
+type UserStatusVo struct {
+	UserID        int `json:"userId"`
+	UserBoilCount int `json:"userBoilCount"`
+	LikeBoilCount int `json:"likeBoilCount"`
+	MsgCount      int `json:"msgCount"`
+	CommentCount  int `json:"commentCount"`
 }

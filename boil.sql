@@ -40,7 +40,7 @@ CREATE TABLE boil_comment
     create_time DATETIME                       NOT NULL,
     content     VARCHAR(100)                   NOT NULL,
     FOREIGN KEY (boil_id) REFERENCES boil_boil (id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES boil_comment (id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES boil_user (id) ON DELETE CASCADE
 );
 
 CREATE TABLE boil_user_like_boil

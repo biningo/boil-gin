@@ -24,4 +24,5 @@ type BoilVo struct {
 	UserName     string `json:"username"`
 	UserBio      string `json:"userBio"`
 	UserAvatarId int    `json:"userAvatarId"`
+	IsLike       bool   `json:"isLike"`
 }
