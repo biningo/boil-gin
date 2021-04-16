@@ -33,7 +33,7 @@ func GetBoils(querySql string, args ...interface{}) ([]model.Boil, error) {
 	if err != nil {
 		return boilArr, err
 	}
-	result, err := exec.Query(args)
+	result, err := exec.Query(args...)
 	if err != nil {
 		return boilArr, err
 	}
