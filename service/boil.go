@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"github.com/biningo/boil-gin/global"
 	"github.com/biningo/boil-gin/model"
 )
@@ -11,7 +12,7 @@ import (
 *@Describe
 **/
 
-func SaveBoil(boil model.Boil) error {
+func InsertBoil(boil model.Boil) error {
 	db := global.G_DB
 	_, err := db.Exec("insert into boil_boil(tag_id,user_id,content,create_time) value(?,?,?,?)",
 		boil.TagID, boil.UserID, boil.Content, boil.CreateTime)
@@ -29,19 +30,21 @@ func GetBoils(querySql string, args ...interface{}) ([]model.Boil, error) {
 	boilArr := []model.Boil{}
 	boil := model.Boil{}
 	db := global.G_DB
-	exec, err := db.Prepare(querySql)
+	strSql := fmt.Sprintf("SELECT id,tag_id,user_id,create_time,content FROM boil_boil WHERE %s ORDER BY create_time DESC", querySql)
+	exec, err := db.Prepare(strSql)
 	if err != nil {
-		return boilArr, err
+		return nil, err
 	}
 	result, err := exec.Query(args...)
 	if err != nil {
-		return boilArr, err
+		return nil, err
 	}
 	defer result.Close()
 	for result.Next() {
 		result.Scan(&boil.ID, &boil.TagID, &boil.UserID, &boil.CreateTime, &boil.Content)
 		boilArr = append(boilArr, boil)
 	}
+	result.Close()
 	return boilArr, nil
 }
 
@@ -63,4 +66,16 @@ func BoilArrToBoilVoArr(boilArr []model.Boil) []model.BoilVo {
 		boilVoArr = append(boilVoArr, boilVo)
 	}
 	return boilVoArr
+}
+
+func CountUserBoil(uid int) (count int, err error) {
+	db := global.G_DB
+	result, err := db.Query("SELECT COUNT(*) FROM boil_boil WHERE user_id=?", uid)
+	if err != nil {
+		return
+	}
+	result.Next()
+	result.Scan(&count)
+	result.Close()
+	return
 }

@@ -15,6 +15,6 @@ func InitCommentRouter(Router *gin.RouterGroup) {
 	{
 		CommentRouter.POST("/publish/:bid", v1.CommentPublish)
 		CommentRouter.GET("/list/:bid", v1.CommentBoilList)
-		CommentRouter.DELETE("/:cid",v1.CommentDelete)
+		CommentRouter.DELETE("/:cid", v1.CommentDelete)
 	}
 }

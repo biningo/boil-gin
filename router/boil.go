@@ -15,12 +15,11 @@ func InitBoilRouter(Router *gin.RouterGroup) {
 	{
 		BoilRouter.POST("/publish", v1.BoilPublish)
 		BoilRouter.GET("/all", v1.BoilAll)
-		BoilRouter.GET("/list/tag/:tid",v1.BoilListByTag)
-		BoilRouter.GET("/list/user/:uid",v1.BoilListByUser)
-		BoilRouter.GET("/user/likes/:uid",v1.BoilListUserLike)
+		BoilRouter.GET("/list/tag/:tid", v1.BoilListByTag)
+		BoilRouter.GET("/list/user/:uid", v1.BoilListByUser)
+		BoilRouter.GET("/list/user/:uid/comment", v1.BoilListUserComment)
 		BoilRouter.DELETE("/:bid", v1.BoilDelete)
-		BoilRouter.GET("/id/:bid",v1.GetBoil)
-		BoilRouter.GET("/list/user/:uid/comment",v1.BoilListUserComment)
+		BoilRouter.GET("/id/:bid", v1.GetBoilById)
 	}
 
 }

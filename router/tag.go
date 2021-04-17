@@ -17,6 +17,6 @@ func InitTagRouter(Router *gin.RouterGroup) {
 		TagRouter.GET("/list", v1.TagList)
 		TagRouter.GET("/create/:title", v1.TagCreate)
 		TagRouter.GET("/delete/:tid", v1.TagDelete)
-		TagRouter.GET("/boil/count/:tid", v1.TagBoilCount)
+		TagRouter.GET("/count/boil/:tid", v1.TagCountBoil)
 	}
 }
