@@ -40,6 +40,7 @@ func GetTags(querySql string, args ...interface{}) (tags []model.Tag, err error)
 		result.Scan(&tag.ID, &tag.Title)
 		tags = append(tags, tag)
 	}
+	result.Close()
 	return
 }
 
@@ -63,5 +64,6 @@ func CountBoilByTag(tid int) (count int, err error) {
 	}
 	result.Next()
 	result.Scan(&count)
+	result.Close()
 	return
 }

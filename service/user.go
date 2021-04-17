@@ -39,31 +39,33 @@ func GetUserByName(username string) (user model.User, err error) {
 	}
 	result.Next()
 	result.Scan(&user.ID, &user.UserName, &user.PassWord, &user.Bio, &user.AvatarID, &user.Salt)
+	result.Close()
 	return
 }
 
 func UpdateUserBio(uid int, bio string) error {
 	db := global.G_DB
-	_, err := db.Exec("update boil_user set bio=? where id=?", bio, uid)
+	_, err := db.Exec("UPDATE boil_user SET bio=? WHERE id=?", bio, uid)
 	return err
 }
 
 func InsertUser(user model.User) error {
 	db := global.G_DB
 	_, err := db.Exec(
-		"insert into boil_user(username,password,avatar_id,salt,bio) value(?,?,?,?,?)",
+		"INSERT INTO boil_user(username,password,avatar_id,salt,bio) VALUE(?,?,?,?,?)",
 		user.UserName, user.PassWord, user.AvatarID, user.Salt, user.Bio)
 	return err
 }
 
 func CountUserByName(username string) (count int, err error) {
 	db := global.G_DB
-	result, err := db.Query("select count(*) from boil_user where username=?", username)
+	result, err := db.Query("SELECT COUNT(*) FROM boil_user WHERE username=?", username)
 	if err != nil {
 		return 0, nil
 	}
 	result.Next()
 	result.Scan(&count)
+	result.Close()
 	return
 }
 

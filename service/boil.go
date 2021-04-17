@@ -14,14 +14,14 @@ import (
 
 func InsertBoil(boil model.Boil) error {
 	db := global.G_DB
-	_, err := db.Exec("insert into boil_boil(tag_id,user_id,content,create_time) value(?,?,?,?)",
+	_, err := db.Exec("INSERT INTO boil_boil(tag_id,user_id,content,create_time) VALUE(?,?,?,?)",
 		boil.TagID, boil.UserID, boil.Content, boil.CreateTime)
 	return err
 }
 
 func DeleteBoilById(bid int) error {
 	db := global.G_DB
-	_, err := db.Exec("delete from boil_boil where id=?", bid)
+	_, err := db.Exec("DELETE FROM boil_boil WHERE id=?", bid)
 	return err
 }
 
