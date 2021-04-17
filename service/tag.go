@@ -31,7 +31,7 @@ func GetTags(querySql string, args ...interface{}) (tags []model.Tag, err error)
 	if err != nil {
 		return
 	}
-	result, err := exec.Query(args)
+	result, err := exec.Query(args...)
 	if err != nil {
 		return
 	}
