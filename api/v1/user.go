@@ -70,8 +70,9 @@ func Registry(c *gin.Context) {
 func UserStatus(c *gin.Context) {
 	uid, _ := strconv.Atoi(c.Param("uid"))
 	userStatusVo := model.UserStatusVo{}
+	userStatusVo.UserID = uid
 	userStatusVo.UserBoilCount, _ = service.CountUserBoil(uid)
-	userStatusVo.CommentCount, _ = service.CountUserComment(uid)
+	userStatusVo.CommentCount, _ = service.CountUserCommentBoil(uid)
 	c.JSON(200, gin.H{"data": userStatusVo})
 }
 

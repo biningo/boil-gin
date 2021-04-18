@@ -53,6 +53,7 @@ func BoilArrToBoilVoArr(boilArr []model.Boil) []model.BoilVo {
 	for _, boil := range boilArr {
 		boilVo := model.BoilVo{}
 		boilVo.ID = boil.ID
+		boilVo.CommentCount, _ = CountBoilComment(boil.ID)
 		boilVo.TagID = boil.TagID
 		boilVo.Content = boil.Content
 		boilVo.CreateTime = boil.CreateTime.Format("2006-01-02 15:04:05")

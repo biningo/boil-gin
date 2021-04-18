@@ -75,9 +75,21 @@ func CommentArrToCommentVoArr(commentArr []model.Comment) ([]model.CommentVo, er
 	return commentVoArr, nil
 }
 
-func CountUserComment(uid int) (count int, err error) {
+func CountUserCommentBoil(uid int) (count int, err error) {
 	db := global.G_DB
 	result, err := db.Query("SELECT COUNT(*) FROM boil_comment WHERE user_id=?", uid)
+	if err != nil {
+		return
+	}
+	result.Next()
+	result.Scan(&count)
+	result.Close()
+	return
+}
+
+func CountBoilComment(bid int) (count int, err error) {
+	db := global.G_DB
+	result, err := db.Query("SELECT COUNT(*) FROM boil_comment WHERE boil_id=?", bid)
 	if err != nil {
 		return
 	}
