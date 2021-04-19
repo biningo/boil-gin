@@ -8,6 +8,14 @@ mysql:
 
 server:
   addr: localhost:8000
+  mode: debug
+
 jwt:
   secret: dsadsadsadsa
   tokentime: 100
+
+redis:
+  addr: localhost:6379
+  db: 0
+  username:
+  password: 55555
