@@ -31,4 +31,6 @@ type UserStatusVo struct {
 	LikeBoilCount int `json:"likeBoilCount"`
 	MsgCount      int `json:"msgCount"`
 	CommentCount  int `json:"commentCount"`
+	Followers     int `json:"followers"`
+	Following     int `json:"following"`
 }
