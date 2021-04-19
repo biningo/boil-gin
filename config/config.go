@@ -9,5 +9,6 @@ package config
 type Config struct {
 	Server Server `json:"server" yaml:"server"`
 	MySql  MySql  `json:"mysql" yaml:"mysql"`
-	Jwt Jwt `json:"jwt" yaml:"jwt"`
+	Jwt    Jwt    `json:"jwt" yaml:"jwt"`
+	Redis  Redis  `json:"redis" yaml:"redis"`
 }

@@ -8,4 +8,5 @@ package config
 
 type Server struct {
 	Addr string `json:"addr" yaml:"addr"`
+	Mode string `json:"mode" yaml:"mode"`
 }

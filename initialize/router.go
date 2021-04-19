@@ -6,6 +6,7 @@ package initialize
 *@Describe
 **/
 import (
+	"github.com/biningo/boil-gin/global"
 	"github.com/biningo/boil-gin/middleware"
 	"github.com/biningo/boil-gin/router"
 	"github.com/gin-gonic/gin"
@@ -13,9 +14,9 @@ import (
 
 func InitRouter() *gin.Engine {
 	r := gin.Default()
-
+	gin.SetMode(global.G_CONFIG.Server.Mode)
 	r.Use(middleware.Cors())
-
+	r.Use(middleware.UserInfoMiddleware())
 	PublicGroup := r.Group("")
 	{
 		router.InitUserRouter(PublicGroup)
