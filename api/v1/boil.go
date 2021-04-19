@@ -45,7 +45,7 @@ func BoilListByTag(c *gin.Context) {
 		c.JSON(500, err.Error())
 		return
 	}
-	boilVoArr := service.BoilArrToBoilVoArr(boilArr)
+	boilVoArr := service.BoilArrToBoilVoArr(boilArr, c.GetInt("loginUserId"))
 	c.JSON(200, gin.H{"data": boilVoArr})
 }
 
@@ -56,7 +56,18 @@ func BoilListByUser(c *gin.Context) {
 		c.JSON(500, err.Error())
 		return
 	}
-	boilVoArr := service.BoilArrToBoilVoArr(boilArr)
+	boilVoArr := service.BoilArrToBoilVoArr(boilArr, c.GetInt("loginUserId"))
+	c.JSON(200, gin.H{"data": boilVoArr})
+}
+
+func BoilListUserLike(c *gin.Context) {
+	uid, _ := strconv.Atoi(c.Param("uid"))
+	boilArr, err := service.BoilListUserLike(uid)
+	if err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
+	boilVoArr := service.BoilArrToBoilVoArr(boilArr, c.GetInt("loginUserId"))
 	c.JSON(200, gin.H{"data": boilVoArr})
 }
 
@@ -66,7 +77,7 @@ func BoilAll(c *gin.Context) {
 		c.JSON(500, err.Error())
 		return
 	}
-	boilVoArr := service.BoilArrToBoilVoArr(boilArr)
+	boilVoArr := service.BoilArrToBoilVoArr(boilArr, c.GetInt("loginUserId"))
 	c.JSON(200, gin.H{"data": boilVoArr})
 }
 
@@ -77,7 +88,11 @@ func GetBoilById(c *gin.Context) {
 		c.JSON(500, err.Error())
 		return
 	}
-	boilVoArr := service.BoilArrToBoilVoArr(boilArr)
+	if len(boilArr) == 0 {
+		c.JSON(200, gin.H{"data": model.BoilVo{}})
+		return
+	}
+	boilVoArr := service.BoilArrToBoilVoArr(boilArr, c.GetInt("loginUserId"))
 	c.JSON(200, gin.H{"data": boilVoArr[0]})
 }
 
@@ -97,6 +112,34 @@ func BoilListUserComment(c *gin.Context) {
 		c.JSON(500, gin.H{"msg": err.Error()})
 		return
 	}
-	boilVoArr := service.BoilArrToBoilVoArr(boilArr)
+	boilVoArr := service.BoilArrToBoilVoArr(boilArr, c.GetInt("loginUserId"))
 	c.JSON(200, gin.H{"data": boilVoArr})
+}
+
+func BoilUserLike(c *gin.Context) {
+	uid, _ := strconv.Atoi(c.Param("uid"))
+	bid, _ := strconv.Atoi(c.Param("bid"))
+	err := service.BoilUserLike(bid, uid)
+	if err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"msg": "successful"})
+}
+func BoilUserUnLike(c *gin.Context) {
+	uid, _ := strconv.Atoi(c.Param("uid"))
+	bid, _ := strconv.Atoi(c.Param("bid"))
+	err := service.BoilUserUnLike(bid, uid)
+	if err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"msg": "successful"})
+	return
+}
+
+func BoilUserIsLike(c *gin.Context) {
+	uid, _ := strconv.Atoi(c.Param("uid"))
+	bid, _ := strconv.Atoi(c.Param("bid"))
+	c.JSON(200, gin.H{"data": service.BoilUserIsLike(bid, uid)})
 }

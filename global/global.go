@@ -11,6 +11,7 @@ import (
 	"github.com/biningo/boil-gin/config"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"github.com/go-redis/redis/v8"
 )
 
 var (
@@ -18,4 +19,5 @@ var (
 	G_CONFIG config.Config
 	G_DB     *sql.DB
 	Routers  *gin.Engine
+	RedisClient		*redis.Client
 )

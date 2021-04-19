@@ -16,5 +16,6 @@ func main() {
 	global.G_VP = initialize.InitViper()
 	global.G_DB = initialize.InitDB()
 	global.Routers = initialize.InitRouter()
+	global.RedisClient = initialize.InitRedis()
 	server.RunServer(":8080",global.Routers)
 }

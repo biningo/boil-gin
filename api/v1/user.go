@@ -73,6 +73,7 @@ func UserStatus(c *gin.Context) {
 	userStatusVo.UserID = uid
 	userStatusVo.UserBoilCount, _ = service.CountUserBoil(uid)
 	userStatusVo.CommentCount, _ = service.CountUserCommentBoil(uid)
+	userStatusVo.LikeBoilCount, _ = service.CountUserLikeBoil(uid)
 	c.JSON(200, gin.H{"data": userStatusVo})
 }
 

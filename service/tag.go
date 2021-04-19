@@ -25,7 +25,7 @@ func GetTagTitleById(tid int) (string, error) {
 	return tagTitle, nil
 }
 
-func GetTags(querySql string, args ...interface{}) (tags []model.Tag, err error) {
+func GetTags(querySql string, args ...interface{}) (tags []model.TagVo, err error) {
 	db := global.G_DB
 	exec, err := db.Prepare(fmt.Sprintf("SELECT id,title FROM boil_tag WHERE %s", querySql))
 	if err != nil {
@@ -36,9 +36,10 @@ func GetTags(querySql string, args ...interface{}) (tags []model.Tag, err error)
 		return
 	}
 	for result.Next() {
-		tag := model.Tag{}
-		result.Scan(&tag.ID, &tag.Title)
-		tags = append(tags, tag)
+		tagVo := model.TagVo{}
+		result.Scan(&tagVo.ID, &tagVo.Title)
+		tagVo.BoilCount, _ = CountBoilByTag(tagVo.ID)
+		tags = append(tags, tagVo)
 	}
 	result.Close()
 	return
