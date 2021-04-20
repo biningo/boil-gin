@@ -19,6 +19,7 @@ func InitBoilRouter(Router *gin.RouterGroup) {
 		BoilRouter.GET("/list/user/:uid", v1.BoilListByUser)
 		BoilRouter.GET("/list/user/:uid/like", v1.BoilListUserLike)
 		BoilRouter.GET("/list/user/:uid/comment", v1.BoilListUserComment)
+		BoilRouter.GET("/list/following", v1.BoilListByFollowing)
 		BoilRouter.DELETE("/:bid", v1.BoilDelete)
 		BoilRouter.GET("/boil/:bid", v1.GetBoilById)
 

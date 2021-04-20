@@ -20,5 +20,7 @@ func InitUserRouter(Router *gin.RouterGroup) {
 		UserRouter.POST("/update/bio/:uid", v1.UpdateUserBio)
 		UserRouter.GET("/follow/:uid", v1.UserFollow)
 		UserRouter.GET("/unfollow/:uid", v1.UserUnFollow)
+		UserRouter.GET("/list/follower/:uid", v1.ListUserFollower)
+		UserRouter.GET("/list/following/:uid", v1.ListUserFollowing)
 	}
 }

@@ -46,7 +46,6 @@ func GetBoils(querySql string, args ...interface{}) ([]model.Boil, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer result.Close()
 	for result.Next() {
 		result.Scan(&boil.ID, &boil.TagID, &boil.UserID, &boil.CreateTime, &boil.Content)
 		boilArr = append(boilArr, boil)
@@ -73,6 +72,7 @@ func BoilArrToBoilVoArr(boilArr []model.Boil, loginUserId int) []model.BoilVo {
 		boilVo.UserName = user.UserName
 		boilVo.UserBio = user.Bio
 		boilVo.UserAvatarId = user.AvatarID
+		boilVo.UserIsFollow, _ = IsUserFollow(loginUserId, boil.UserID)
 		boilVoArr = append(boilVoArr, boilVo)
 	}
 	return boilVoArr
@@ -83,7 +83,7 @@ func BoilUserLike(bid int, uid int) error {
 	redisCli := global.RedisClient
 	_, err := redisCli.SAdd(context.Background(), fmt.Sprintf("user:%d_like_boils", uid), bid).Result()
 	if err != nil {
-		return InsertUserLikeBoil(uid, bid)
+		return err
 	}
 	IncrBoilLikeCount(bid)
 	return nil
@@ -131,6 +131,7 @@ func CountBoilLike(bid int) (int, error) {
 	countDB := 0
 	r.Next()
 	r.Scan(&countDB)
+	r.Close()
 	return count + countDB, nil
 }
 func CountUserLikeBoil(uid int) (int, error) {
@@ -144,6 +145,7 @@ func CountUserLikeBoil(uid int) (int, error) {
 	r.Next()
 	countDB := 0
 	r.Scan(&countDB)
+	r.Close()
 	return int(count) + countDB, err
 }
 func BoilUserIsLike(bid, uid int) bool {
@@ -159,6 +161,7 @@ func BoilUserIsLike(bid, uid int) bool {
 		}
 		r.Next()
 		r.Scan(&count)
+		r.Close()
 		if count > 0 {
 			result = true
 		}
@@ -192,6 +195,7 @@ func BoilListUserLike(uid int) ([]model.Boil, error) {
 		r.Scan(&bid)
 		bids = append(bids, strconv.Itoa(bid))
 	}
+	r.Close()
 	if len(bids) == 0 {
 		return nil, nil
 	}

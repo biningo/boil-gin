@@ -4,6 +4,7 @@ import (
 	"github.com/biningo/boil-gin/model"
 	"github.com/biningo/boil-gin/service"
 	"github.com/gin-gonic/gin"
+	"log"
 	"strconv"
 )
 
@@ -35,7 +36,7 @@ func Login(c *gin.Context) {
 		c.JSON(500, gin.H{"msg": err.Error()})
 		return
 	}
-	userInfo, err := service.GetUserInfo(user.ID)
+	userInfo, err := service.GetUserInfoById(user.ID, 0)
 	if err != nil {
 		c.JSON(500, gin.H{"msg": err.Error()})
 		return
@@ -73,7 +74,7 @@ func Registry(c *gin.Context) {
 
 func UserInfo(c *gin.Context) {
 	uid, _ := strconv.Atoi(c.Param("uid"))
-	userInfoVo, err := service.GetUserInfo(uid)
+	userInfoVo, err := service.GetUserInfoById(uid, c.GetInt("loginUserId"))
 	if err != nil {
 		c.JSON(500, gin.H{"msg": err.Error()})
 		return
@@ -96,9 +97,43 @@ func UpdateUserBio(c *gin.Context) {
 }
 
 func UserFollow(c *gin.Context) {
-
+	followerId := c.GetInt("loginUserId")
+	uid, _ := strconv.Atoi(c.Param("uid"))
+	err := service.InsertUserFollow(followerId, uid)
+	if err != nil {
+		log.Println(err)
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"msg": "successful"})
 }
 
 func UserUnFollow(c *gin.Context) {
+	followerId := c.GetInt("loginUserId")
+	uid, _ := strconv.Atoi(c.Param("uid"))
+	err := service.DeleteUserFollow(followerId, uid)
+	if err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"msg": "successful"})
+}
 
+func ListUserFollower(c *gin.Context) {
+	uid, _ := strconv.Atoi(c.Param("uid"))
+	userInfoArr, err := service.GetUserFollower(uid, c.GetInt("loginUserId"))
+	if err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"data": userInfoArr})
+}
+func ListUserFollowing(c *gin.Context) {
+	uid, _ := strconv.Atoi(c.Param("uid"))
+	userInfoArr, err := service.GetUserFollowing(uid, c.GetInt("loginUserId"))
+	if err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"data": userInfoArr})
 }

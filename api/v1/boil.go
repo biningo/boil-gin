@@ -60,6 +60,26 @@ func BoilListByUser(c *gin.Context) {
 	c.JSON(200, gin.H{"data": boilVoArr})
 }
 
+func BoilListByFollowing(c *gin.Context) {
+	loginUserId := c.GetInt("loginUserId")
+	followingIds, err := service.GetUserFollowingIds(loginUserId)
+	if err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
+	if len(followingIds) == 0 {
+		c.JSON(200, gin.H{"data": []model.BoilVo{}})
+		return
+	}
+	boilArr, err := service.GetBoils("user_id in " + "(" + strings.Join(followingIds, ",") + ")")
+	if err != nil {
+		c.JSON(500, err.Error())
+		return
+	}
+	boilVoArr := service.BoilArrToBoilVoArr(boilArr, c.GetInt("loginUserId"))
+	c.JSON(200, gin.H{"data": boilVoArr})
+}
+
 func BoilListUserLike(c *gin.Context) {
 	uid, _ := strconv.Atoi(c.Param("uid"))
 	boilArr, err := service.BoilListUserLike(uid)
