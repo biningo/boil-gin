@@ -18,19 +18,15 @@ type UserRegistryVo struct {
 	Bio      string `json:"bio"`
 }
 
-type UserInfo struct {
-	ID       int    `json:"id"`
-	UserName string `json:"username"`
-	Bio      string `json:"bio"`
-	AvatarID int    `json:"avatarId"`
-}
-
-type UserStatusVo struct {
-	UserID        int `json:"userId"`
-	UserBoilCount int `json:"userBoilCount"`
-	LikeBoilCount int `json:"likeBoilCount"`
-	MsgCount      int `json:"msgCount"`
-	CommentCount  int `json:"commentCount"`
-	Followers     int `json:"followers"`
-	Following     int `json:"following"`
+type UserInfoVo struct {
+	ID             int    `json:"id"`
+	UserName       string `json:"username"`
+	Bio            string `json:"bio"`
+	AvatarID       int    `json:"avatarId"`
+	BoilCount      int    `json:"boilCount"`
+	LikeBoilCount  int    `json:"likeBoilCount"`
+	CommentBoilCount   int    `json:"commentBoilCount"`
+	FollowerCount  int    `json:"followerCount"`
+	FollowingCount int    `json:"followingCount"`
+	IsFollow       bool   `json:"isFollow"`
 }

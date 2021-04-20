@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/biningo/boil-gin/global"
 	"log"
 	"net/http"
 	"os"
@@ -28,7 +29,6 @@ func RunServer(addr string, handler http.Handler) {
 	signal.Notify(quit, os.Interrupt)
 	<-quit
 	log.Println("shutdown server......")
-
 	//设置超时时间context
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -36,5 +36,8 @@ func RunServer(addr string, handler http.Handler) {
 	if err := srv.Shutdown(ctx); err != nil {
 		panic(err)
 	}
+	//close db
+	global.G_DB.Close()
+	global.RedisClient.Close()
 	log.Println("Server exiting")
 }

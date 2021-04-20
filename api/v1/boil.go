@@ -119,11 +119,7 @@ func BoilListUserComment(c *gin.Context) {
 func BoilUserLike(c *gin.Context) {
 	uid, _ := strconv.Atoi(c.Param("uid"))
 	bid, _ := strconv.Atoi(c.Param("bid"))
-	err := service.BoilUserLike(bid, uid)
-	if err != nil {
-		c.JSON(500, gin.H{"msg": err.Error()})
-		return
-	}
+	service.BoilUserLike(bid, uid)
 	c.JSON(200, gin.H{"msg": "successful"})
 }
 func BoilUserUnLike(c *gin.Context) {

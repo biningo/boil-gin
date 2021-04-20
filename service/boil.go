@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/biningo/boil-gin/global"
 	"github.com/biningo/boil-gin/model"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -60,7 +61,7 @@ func BoilArrToBoilVoArr(boilArr []model.Boil, loginUserId int) []model.BoilVo {
 		boilVo := model.BoilVo{}
 		boilVo.ID = boil.ID
 		boilVo.CommentCount, _ = CountBoilComment(boil.ID)
-		boilVo.LikeCount = CountBoilLike(boil.ID)
+		boilVo.LikeCount, _ = CountBoilLike(boil.ID)
 		boilVo.IsLike = BoilUserIsLike(boil.ID, loginUserId)
 		boilVo.TagID = boil.TagID
 		boilVo.Content = boil.Content
@@ -82,45 +83,86 @@ func BoilUserLike(bid int, uid int) error {
 	redisCli := global.RedisClient
 	_, err := redisCli.SAdd(context.Background(), fmt.Sprintf("user:%d_like_boils", uid), bid).Result()
 	if err != nil {
-		return err
+		return InsertUserLikeBoil(uid, bid)
 	}
-	return IncrBoilLikeCount(bid)
+	IncrBoilLikeCount(bid)
+	return nil
 }
 func BoilUserUnLike(bid, uid int) error {
 	redisCli := global.RedisClient
-	_, err := redisCli.SRem(context.Background(), fmt.Sprintf("user:%d_like_boils", uid), 0, bid).Result()
-	if err != nil {
-		return err
+	r, err := redisCli.SRem(context.Background(), fmt.Sprintf("user:%d_like_boils", uid), 0, bid).Result()
+	if r == 0 || err != nil {
+		err := DeleteUserLikeBoil(uid, bid)
+		if err != nil {
+			return err
+		}
 	}
-	return DecrBoilLikeCount(bid)
-}
-func IncrBoilLikeCount(bid int) error {
-	redisCli := global.RedisClient
-	_, err := redisCli.HIncrBy(context.Background(), "boil_like_count", strconv.Itoa(bid), 1).Result()
-	return err
-}
-func DecrBoilLikeCount(bid int) error {
-	redisCli := global.RedisClient
-	_, err := redisCli.HIncrBy(context.Background(), "boil_like_count", strconv.Itoa(bid), -1).Result()
-	return err
-}
-func CountBoilLike(bid int) int {
-	redisCli := global.RedisClient
-	result, err := redisCli.HGet(context.Background(), "boil_like_count", strconv.Itoa(bid)).Result()
-	if err != nil {
-		return 0
+	if err == nil {
+		DecrBoilLikeCount(bid)
 	}
+	return nil
+}
+func IncrBoilLikeCount(bid int) {
+	redisCli := global.RedisClient
+	redisCli.HIncrBy(context.Background(), "boil_like_count", strconv.Itoa(bid), 1)
+}
+func DecrBoilLikeCount(bid int) {
+	redisCli := global.RedisClient
+	count, _ := redisCli.HGet(context.Background(), "boil_like_count", strconv.Itoa(bid)).Result()
+	if count == "0" || count == "" {
+		return
+	}
+	redisCli.HIncrBy(context.Background(), "boil_like_count", strconv.Itoa(bid), -1)
+}
+
+func CountBoilLike(bid int) (int, error) {
+	redisCli := global.RedisClient
+	result, _ := redisCli.HGet(context.Background(), "boil_like_count", strconv.Itoa(bid)).Result()
 	count, _ := strconv.Atoi(result)
-	return count
+	if count < 0 {
+		count = 0
+	}
+	//mysql
+	db := global.G_DB
+	r, err := db.Query("SELECT COUNT(*) FROM boil_user_like_boil WHERE boil_id=?", bid)
+	if err != nil {
+		return 0, err
+	}
+	countDB := 0
+	r.Next()
+	r.Scan(&countDB)
+	return count + countDB, nil
 }
 func CountUserLikeBoil(uid int) (int, error) {
 	redisCli := global.RedisClient
-	count, err := redisCli.SCard(context.Background(), fmt.Sprintf("user:%d_like_boils", uid)).Result()
-	return int(count), err
+	count, _ := redisCli.SCard(context.Background(), fmt.Sprintf("user:%d_like_boils", uid)).Result()
+	db := global.G_DB
+	r, err := db.Query("SELECT COUNT(*) FROM boil_user_like_boil WHERE user_id=?", uid)
+	if err != nil {
+		return 0, err
+	}
+	r.Next()
+	countDB := 0
+	r.Scan(&countDB)
+	return int(count) + countDB, err
 }
 func BoilUserIsLike(bid, uid int) bool {
 	redisCli := global.RedisClient
 	result, _ := redisCli.SIsMember(context.Background(), fmt.Sprintf("user:%d_like_boils", uid), bid).Result()
+	//mysql
+	if result == false {
+		db := global.G_DB
+		count := 0
+		r, err := db.Query("SELECT COUNT(*) FROM boil_user_like_boil WHERE boil_id=? AND user_id=?", bid, uid)
+		if err != nil {
+			return false
+		}
+		r.Next()
+		r.Scan(&count)
+		if count > 0 {
+			result = true
+		}
+	}
 	return result
 }
 func ClearBoilUserLike(bid int) error {
@@ -138,15 +180,37 @@ func ClearBoilUserLike(bid int) error {
 
 func BoilListUserLike(uid int) ([]model.Boil, error) {
 	redisCli := global.RedisClient
-	bids, err := redisCli.SMembers(context.Background(), fmt.Sprintf("user:%d_like_boils", uid)).Result()
-	if err != nil || len(bids) == 0 {
+	bids, _ := redisCli.SMembers(context.Background(), fmt.Sprintf("user:%d_like_boils", uid)).Result()
+	db := global.G_DB
+	r, err := db.Query("SELECT boil_id FROM boil_user_like_boil WHERE user_id=?", uid)
+	if err != nil {
+		log.Println(err)
 		return nil, err
+	}
+	for r.Next() {
+		bid := 0
+		r.Scan(&bid)
+		bids = append(bids, strconv.Itoa(bid))
+	}
+	if len(bids) == 0 {
+		return nil, nil
 	}
 	boilArr, err := GetBoils("id in " + "(" + strings.Join(bids, ",") + ")")
 	if err != nil {
 		return nil, err
 	}
 	return boilArr, nil
+}
+
+func InsertUserLikeBoil(uid, bid int) error {
+	db := global.G_DB
+	_, err := db.Exec("INSERT INTO boil_user_like_boil(user_id,boil_id) VALUE (?,?)", uid, bid)
+	return err
+}
+func DeleteUserLikeBoil(uid, bid int) error {
+	db := global.G_DB
+	_, err := db.Exec("DELETE FROM boil_user_like_boil WHERE user_id=? AND boil_id=?", uid, bid)
+	return err
 }
 
 //like

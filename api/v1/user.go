@@ -35,7 +35,11 @@ func Login(c *gin.Context) {
 		c.JSON(500, gin.H{"msg": err.Error()})
 		return
 	}
-	userInfo := model.UserInfo{ID: user.ID, UserName: user.UserName, Bio: user.Bio, AvatarID: user.AvatarID}
+	userInfo, err := service.GetUserInfo(user.ID)
+	if err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
 	c.JSON(200, gin.H{"data": userInfo, "token": tokenString})
 }
 
@@ -67,14 +71,14 @@ func Registry(c *gin.Context) {
 	c.JSON(200, gin.H{"data": user, "token": tokenString, "msg": "注册成功"})
 }
 
-func UserStatus(c *gin.Context) {
+func UserInfo(c *gin.Context) {
 	uid, _ := strconv.Atoi(c.Param("uid"))
-	userStatusVo := model.UserStatusVo{}
-	userStatusVo.UserID = uid
-	userStatusVo.UserBoilCount, _ = service.CountUserBoil(uid)
-	userStatusVo.CommentCount, _ = service.CountUserCommentBoil(uid)
-	userStatusVo.LikeBoilCount, _ = service.CountUserLikeBoil(uid)
-	c.JSON(200, gin.H{"data": userStatusVo})
+	userInfoVo, err := service.GetUserInfo(uid)
+	if err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"data": userInfoVo})
 }
 
 func UpdateUserBio(c *gin.Context) {
@@ -89,4 +93,12 @@ func UpdateUserBio(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{"msg": "更新成功!"})
+}
+
+func UserFollow(c *gin.Context) {
+
+}
+
+func UserUnFollow(c *gin.Context) {
+
 }

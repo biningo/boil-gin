@@ -107,3 +107,23 @@ func CleanUser(user *model.User) {
 	user.PassWord = ""
 	user.Salt = ""
 }
+
+func GetUserInfo(uid int) (userVo model.UserInfoVo, err error) {
+	user, err := GetUserById(uid)
+	if err != nil {
+		return
+	}
+	userVo.ID = uid
+	userVo.UserName = user.UserName
+	userVo.AvatarID = user.AvatarID
+	userVo.Bio = user.Bio
+	//TODO
+	userVo.FollowerCount = 0
+	userVo.FollowingCount = 0
+	userVo.IsFollow = false
+	//
+	userVo.BoilCount, _ = CountUserBoil(uid)
+	userVo.CommentBoilCount, _ = CountUserCommentBoil(uid)
+	userVo.LikeBoilCount, _ = CountUserLikeBoil(uid)
+	return userVo, nil
+}
