@@ -7,6 +7,7 @@ import (
 	"github.com/biningo/boil-gin/model"
 	"github.com/biningo/boil-gin/utils"
 	"github.com/dgrijalva/jwt-go"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -250,4 +251,18 @@ func GetUserFollowingIds(uid int) ([]string, error) {
 	}
 	result.Close()
 	return followerIdArr, nil
+}
+
+func GetRecommendUsers(loginUserId int) ([]model.UserInfoVo, error) {
+	ids, err := GetUserFollowingIds(loginUserId)
+	userInfoVoArr := []model.UserInfoVo{}
+	if err != nil {
+		return userInfoVoArr, err
+	}
+	for _, sid := range ids {
+		id, _ := strconv.Atoi(sid)
+		following, _ := GetUserFollowing(id, loginUserId)
+		userInfoVoArr = append(userInfoVoArr, following...)
+	}
+	return userInfoVoArr, nil
 }

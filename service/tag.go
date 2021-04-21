@@ -27,6 +27,7 @@ func GetTagTitleById(tid int) (string, error) {
 
 func GetTags(querySql string, args ...interface{}) (tags []model.TagVo, err error) {
 	db := global.G_DB
+	tags = []model.TagVo{}
 	exec, err := db.Prepare(fmt.Sprintf("SELECT id,title FROM boil_tag WHERE %s", querySql))
 	if err != nil {
 		return

@@ -18,6 +18,12 @@ CREATE TABLE boil_user_follow_user
 );
 
 
+CREATE TABLE boil_tag
+(
+    id    INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
+    title VARCHAR(10)                    NOT NULL
+);
+
 CREATE TABLE boil_boil
 (
     id          INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
@@ -48,10 +54,4 @@ CREATE TABLE boil_user_like_boil
     boil_id INT                            NOT NULL,
     FOREIGN KEY (user_id) REFERENCES boil_user (id) ON DELETE CASCADE,
     FOREIGN KEY (boil_id) REFERENCES boil_boil (id) ON DELETE CASCADE
-);
-
-CREATE TABLE boil_tag
-(
-    id    INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
-    title VARCHAR(10)                    NOT NULL
 );

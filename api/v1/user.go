@@ -137,3 +137,13 @@ func ListUserFollowing(c *gin.Context) {
 	}
 	c.JSON(200, gin.H{"data": userInfoArr})
 }
+
+func ListRecommendUser(c *gin.Context) {
+	loginUserId := c.GetInt("loginUserId")
+	userInfoArr, err := service.GetRecommendUsers(loginUserId)
+	if err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"data": userInfoArr})
+}
