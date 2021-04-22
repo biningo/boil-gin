@@ -279,6 +279,9 @@ func GetRecommendUsers(loginUserId int) ([]model.UserInfoVo, error) {
 		}
 		result.Close()
 		followerUserInfoVoArr, err := GetUserInfoByIds(followerIdArr, loginUserId)
+		if err != nil {
+			return []model.UserInfoVo{}, err
+		}
 		userInfoVoArr = append(userInfoVoArr, followerUserInfoVoArr...)
 	}
 	return userInfoVoArr, nil

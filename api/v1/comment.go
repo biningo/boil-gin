@@ -17,7 +17,10 @@ func CommentPublish(c *gin.Context) {
 	uid := c.GetHeader("userId")
 	bid := c.Param("bid")
 	comment := model.Comment{}
-	c.ShouldBindJSON(&comment)
+	if err := c.ShouldBindJSON(&comment); err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
 	comment.UserID, _ = strconv.Atoi(uid)
 	comment.BoilID, _ = strconv.Atoi(bid)
 	comment.CreateTime = time.Now()

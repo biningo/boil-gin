@@ -20,7 +20,9 @@ func GetTagTitleById(tid int) (string, error) {
 	}
 	tagTitle := ""
 	result.Next()
-	result.Scan(&tagTitle)
+	if err := result.Scan(&tagTitle); err != nil {
+		return "", nil
+	}
 	result.Close()
 	return tagTitle, nil
 }
@@ -38,7 +40,9 @@ func GetTags(querySql string, args ...interface{}) (tags []model.TagVo, err erro
 	}
 	for result.Next() {
 		tagVo := model.TagVo{}
-		result.Scan(&tagVo.ID, &tagVo.Title)
+		if err := result.Scan(&tagVo.ID, &tagVo.Title); err != nil {
+			return []model.TagVo{}, err
+		}
 		tagVo.BoilCount, _ = CountBoilByTag(tagVo.ID)
 		tags = append(tags, tagVo)
 	}
@@ -65,7 +69,9 @@ func CountBoilByTag(tid int) (count int, err error) {
 		return 0, err
 	}
 	result.Next()
-	result.Scan(&count)
+	if err := result.Scan(&count); err != nil {
+		return 0, err
+	}
 	result.Close()
 	return
 }

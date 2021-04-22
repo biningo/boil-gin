@@ -47,7 +47,10 @@ func GetBoils(querySql string, args ...interface{}) ([]model.Boil, error) {
 		return nil, err
 	}
 	for result.Next() {
-		result.Scan(&boil.ID, &boil.TagID, &boil.UserID, &boil.CreateTime, &boil.Content)
+		err := result.Scan(&boil.ID, &boil.TagID, &boil.UserID, &boil.CreateTime, &boil.Content)
+		if err != nil {
+			return []model.Boil{}, err
+		}
 		boilArr = append(boilArr, boil)
 	}
 	result.Close()
@@ -130,7 +133,10 @@ func CountBoilLike(bid int) (int, error) {
 	}
 	countDB := 0
 	r.Next()
-	r.Scan(&countDB)
+	err = r.Scan(&countDB)
+	if err != nil {
+		return 0, err
+	}
 	r.Close()
 	return count + countDB, nil
 }
@@ -144,7 +150,10 @@ func CountUserLikeBoil(uid int) (int, error) {
 	}
 	r.Next()
 	countDB := 0
-	r.Scan(&countDB)
+	err = r.Scan(&countDB)
+	if err != nil {
+		return 0, err
+	}
 	r.Close()
 	return int(count) + countDB, err
 }
@@ -152,7 +161,7 @@ func BoilUserIsLike(bid, uid int) bool {
 	redisCli := global.RedisClient
 	result, _ := redisCli.SIsMember(context.Background(), fmt.Sprintf("user:%d_like_boils", uid), bid).Result()
 	//mysql
-	if result == false {
+	if !result {
 		db := global.G_DB
 		count := 0
 		r, err := db.Query("SELECT COUNT(*) FROM boil_user_like_boil WHERE boil_id=? AND user_id=?", bid, uid)
@@ -160,7 +169,10 @@ func BoilUserIsLike(bid, uid int) bool {
 			return false
 		}
 		r.Next()
-		r.Scan(&count)
+		err = r.Scan(&count)
+		if err != nil {
+			return false
+		}
 		r.Close()
 		if count > 0 {
 			result = true
@@ -171,7 +183,7 @@ func BoilUserIsLike(bid, uid int) bool {
 func ClearBoilUserLike(bid int) error {
 	redisCli := global.RedisClient
 	redisCli.HDel(context.Background(), "boil_like_count", strconv.Itoa(bid))
-	keys, err := redisCli.Keys(context.Background(), fmt.Sprintf("*_like_boils")).Result()
+	keys, err := redisCli.Keys(context.Background(), "*_like_boils").Result()
 	if err != nil {
 		return err
 	}
@@ -192,7 +204,10 @@ func BoilListUserLike(uid int) ([]model.Boil, error) {
 	}
 	for r.Next() {
 		bid := 0
-		r.Scan(&bid)
+		err := r.Scan(&bid)
+		if err != nil {
+			return []model.Boil{}, err
+		}
 		bids = append(bids, strconv.Itoa(bid))
 	}
 	r.Close()
@@ -226,7 +241,10 @@ func CountUserBoil(uid int) (count int, err error) {
 		return
 	}
 	result.Next()
-	result.Scan(&count)
+	err = result.Scan(&count)
+	if err != nil {
+		return 0, err
+	}
 	result.Close()
 	return
 }

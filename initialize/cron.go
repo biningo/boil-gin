@@ -2,7 +2,6 @@ package initialize
 
 import (
 	"context"
-	"fmt"
 	"github.com/biningo/boil-gin/global"
 	"github.com/biningo/boil-gin/service"
 	"strconv"
@@ -23,7 +22,7 @@ func InitRedisToMySqlCron(duration time.Duration) {
 			case <-time.Tick(duration):
 				redisCli := global.RedisClient
 				redisCli.Del(context.Background(), "boil_like_count")
-				keys, err := redisCli.Keys(context.Background(), fmt.Sprintf("*_like_boils")).Result()
+				keys, err := redisCli.Keys(context.Background(), "*_like_boils").Result()
 				if err != nil {
 					continue
 				}

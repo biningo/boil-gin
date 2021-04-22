@@ -21,7 +21,9 @@ func GetCommentBidsByUid(uid int) ([]string, error) {
 		return nil, err
 	}
 	for result.Next() {
-		result.Scan(&bid)
+		if err := result.Scan(&bid); err != nil {
+			return []string{}, err
+		}
 		bids = append(bids, bid)
 	}
 	result.Close()
@@ -50,7 +52,9 @@ func GetComments(querySql string, args ...interface{}) ([]model.Comment, error) 
 	comments := []model.Comment{}
 	comment := model.Comment{}
 	for result.Next() {
-		result.Scan(&comment.ID, &comment.UserID, &comment.BoilID, &comment.Content, &comment.CreateTime)
+		if err := result.Scan(&comment.ID, &comment.UserID, &comment.BoilID, &comment.Content, &comment.CreateTime); err != nil {
+			return []model.Comment{}, err
+		}
 		comments = append(comments, comment)
 	}
 	result.Close()
@@ -82,7 +86,9 @@ func CountUserCommentBoil(uid int) (count int, err error) {
 		return
 	}
 	result.Next()
-	result.Scan(&count)
+	if err := result.Scan(&count); err != nil {
+		return 0, err
+	}
 	result.Close()
 	return
 }
@@ -94,7 +100,9 @@ func CountBoilComment(bid int) (count int, err error) {
 		return
 	}
 	result.Next()
-	result.Scan(&count)
+	if err := result.Scan(&count); err != nil {
+		return 0, err
+	}
 	result.Close()
 	return
 }

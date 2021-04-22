@@ -16,7 +16,10 @@ import (
 
 func Login(c *gin.Context) {
 	userLoginVo := model.UserLoginVo{}
-	c.ShouldBindJSON(&userLoginVo)
+	if err := c.ShouldBindJSON(&userLoginVo); err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
 	count, _ := service.CountUserByName(userLoginVo.UserName)
 	if count != 1 {
 		c.JSON(200, gin.H{"msg": "用户名或则密码不正确"})
@@ -51,7 +54,10 @@ func Logout(c *gin.Context) {
 
 func Registry(c *gin.Context) {
 	userRegistryVo := model.UserRegistryVo{}
-	c.ShouldBindJSON(&userRegistryVo)
+	if err := c.ShouldBindJSON(&userRegistryVo); err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
 	count, _ := service.CountUserByName(userRegistryVo.UserName)
 	if count != 0 {
 		c.JSON(200, gin.H{"msg": "用户名存在!!"})
@@ -87,7 +93,10 @@ func UpdateUserBio(c *gin.Context) {
 	bioVo := struct {
 		Bio string `json:"bio"`
 	}{}
-	c.ShouldBindJSON(&bioVo)
+	if err := c.ShouldBindJSON(&bioVo); err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
 	err := service.UpdateUserBio(uid, bioVo.Bio)
 	if err != nil {
 		c.JSON(500, gin.H{"msg": "更新错误"})

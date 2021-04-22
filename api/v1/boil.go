@@ -17,7 +17,10 @@ import (
 
 func BoilPublish(c *gin.Context) {
 	boilPublish := model.BoilPublishVo{}
-	c.ShouldBindJSON(&boilPublish)
+	if err := c.ShouldBindJSON(&boilPublish); err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
 	boil := model.Boil{Content: boilPublish.Content, TagID: boilPublish.TagID, UserID: boilPublish.UserID}
 	boil.CreateTime = time.Now()
 	err := service.InsertBoil(boil)
@@ -139,15 +142,20 @@ func BoilListUserComment(c *gin.Context) {
 func BoilUserLike(c *gin.Context) {
 	uid, _ := strconv.Atoi(c.Param("uid"))
 	bid, _ := strconv.Atoi(c.Param("bid"))
-	service.BoilUserLike(bid, uid)
+	if err := service.BoilUserLike(bid, uid); err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
 	c.JSON(200, gin.H{"msg": "successful"})
 }
 func BoilUserUnLike(c *gin.Context) {
 	uid, _ := strconv.Atoi(c.Param("uid"))
 	bid, _ := strconv.Atoi(c.Param("bid"))
-	service.BoilUserUnLike(bid, uid)
+	if err := service.BoilUserUnLike(bid, uid); err != nil {
+		c.JSON(500, gin.H{"msg": err.Error()})
+		return
+	}
 	c.JSON(200, gin.H{"msg": "successful"})
-	return
 }
 
 func BoilUserIsLike(c *gin.Context) {
