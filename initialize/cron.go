@@ -36,11 +36,14 @@ func InitRedisToMySqlCron(duration time.Duration) {
 					uid, _ := strconv.Atoi(suid)
 					bids, err := redisCli.SMembers(context.Background(), key).Result()
 					if err != nil {
-						continue
+						break
 					}
 					for _, sbid := range bids {
 						bid, _ := strconv.Atoi(sbid)
-						service.InsertUserLikeBoil(uid, bid)
+						err := service.InsertUserLikeBoil(uid, bid)
+						if err != nil {
+							break
+						}
 					}
 					redisCli.Del(context.Background(), key)
 				}

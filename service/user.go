@@ -222,7 +222,9 @@ func GetUserFollower(uid int, loginUserId int) ([]model.UserInfoVo, error) {
 
 func GetUserFollowing(uid, loginUserId int) ([]model.UserInfoVo, error) {
 	db := global.G_DB
-	result, err := db.Query("SELECT user_id FROM boil_user_follow_user WHERE follower_id=?", uid)
+	result, err := db.Query(
+		"SELECT user_id FROM boil_user_follow_user WHERE follower_id=? AND user_id!=?",
+		uid, loginUserId)
 	if err != nil {
 		return nil, err
 	}
@@ -261,8 +263,46 @@ func GetRecommendUsers(loginUserId int) ([]model.UserInfoVo, error) {
 	}
 	for _, sid := range ids {
 		id, _ := strconv.Atoi(sid)
-		following, _ := GetUserFollowing(id, loginUserId)
-		userInfoVoArr = append(userInfoVoArr, following...)
+		db := global.G_DB
+		result, err := db.Query(
+			"SELECT user_id FROM boil_user_follow_user WHERE follower_id=? AND user_id!=? AND user_id NOT IN "+
+				"(SELECT user_id FROM boil_user_follow_user WHERE follower_id=?)",
+			id, loginUserId, loginUserId)
+		if err != nil {
+			return nil, err
+		}
+		followerIdArr := []string{}
+		for result.Next() {
+			id := "0"
+			result.Scan(&id)
+			followerIdArr = append(followerIdArr, id)
+		}
+		result.Close()
+		followerUserInfoVoArr, err := GetUserInfoByIds(followerIdArr, loginUserId)
+		userInfoVoArr = append(userInfoVoArr, followerUserInfoVoArr...)
 	}
+	return userInfoVoArr, nil
+}
+
+func GetAllUser(loginUserId int) ([]model.UserInfoVo, error) {
+	db := global.G_DB
+	result, err := db.Query(
+		"SELECT id,username,bio,avatar_id FROM boil_user")
+	if err != nil {
+		return []model.UserInfoVo{}, err
+	}
+	userInfoVo := model.UserInfoVo{}
+	userInfoVoArr := []model.UserInfoVo{}
+	for result.Next() {
+		result.Scan(&userInfoVo.ID, &userInfoVo.UserName, &userInfoVo.Bio, &userInfoVo.AvatarID)
+		userInfoVo.FollowerCount, _ = CountUserFollower(userInfoVo.ID)
+		userInfoVo.FollowingCount, _ = CountUserFollowing(userInfoVo.ID)
+		userInfoVo.IsFollow, _ = IsUserFollow(loginUserId, userInfoVo.ID)
+		userInfoVo.BoilCount, _ = CountUserBoil(userInfoVo.ID)
+		userInfoVo.CommentBoilCount, _ = CountUserCommentBoil(userInfoVo.ID)
+		userInfoVo.LikeBoilCount, _ = CountUserLikeBoil(userInfoVo.ID)
+		userInfoVoArr = append(userInfoVoArr, userInfoVo)
+	}
+	result.Close()
 	return userInfoVoArr, nil
 }

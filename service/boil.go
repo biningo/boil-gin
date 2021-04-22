@@ -91,15 +91,15 @@ func BoilUserLike(bid int, uid int) error {
 func BoilUserUnLike(bid, uid int) error {
 	redisCli := global.RedisClient
 	r, err := redisCli.SRem(context.Background(), fmt.Sprintf("user:%d_like_boils", uid), 0, bid).Result()
-	if r == 0 || err != nil {
+	if err != nil {
+		return err
+	} else if r == 0 {
 		err := DeleteUserLikeBoil(uid, bid)
 		if err != nil {
 			return err
 		}
 	}
-	if err == nil {
-		DecrBoilLikeCount(bid)
-	}
+	DecrBoilLikeCount(bid)
 	return nil
 }
 func IncrBoilLikeCount(bid int) {

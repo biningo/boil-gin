@@ -13,6 +13,7 @@ import (
 func InitUserRouter(Router *gin.RouterGroup) {
 	UserRouter := Router.Group("/user")
 	{
+		UserRouter.GET("/all", v1.ListUser)
 		UserRouter.POST("/login", v1.Login)
 		UserRouter.GET("/logout", v1.Logout)
 		UserRouter.POST("/registry", v1.Registry)
