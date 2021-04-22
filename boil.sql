@@ -1,3 +1,4 @@
+use boil;
 CREATE TABLE boil_user
 (
     id        INT PRIMARY KEY AUTO_INCREMENT NOT NULL,
@@ -14,7 +15,8 @@ CREATE TABLE boil_user_follow_user
     follower_id INT                            NOT NULL,
     user_id     INT                            NOT NULL,
     FOREIGN KEY (follower_id) REFERENCES boil_user (id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES boil_user (id) ON DELETE CASCADE
+    FOREIGN KEY (user_id) REFERENCES boil_user (id) ON DELETE CASCADE,
+    UNIQUE KEY (follower_id, user_id)
 );
 
 

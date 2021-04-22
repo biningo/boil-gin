@@ -14,11 +14,12 @@ func InitUserRouter(Router *gin.RouterGroup) {
 	UserRouter := Router.Group("/user")
 	{
 		UserRouter.GET("/all", v1.ListUser)
+		UserRouter.GET("/info/:uid", v1.UserInfo)
+		UserRouter.POST("/update/bio/:uid", v1.UpdateUserBio)
+
 		UserRouter.POST("/login", v1.Login)
 		UserRouter.GET("/logout", v1.Logout)
 		UserRouter.POST("/registry", v1.Registry)
-		UserRouter.GET("/info/:uid", v1.UserInfo)
-		UserRouter.POST("/update/bio/:uid", v1.UpdateUserBio)
 		UserRouter.GET("/follow/:uid", v1.UserFollow)
 		UserRouter.GET("/unfollow/:uid", v1.UserUnFollow)
 		UserRouter.GET("/list/follower/:uid", v1.ListUserFollower)

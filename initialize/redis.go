@@ -1,6 +1,7 @@
 package initialize
 
 import (
+	"context"
 	"github.com/biningo/boil-gin/global"
 	"github.com/go-redis/redis/v8"
 )
@@ -12,10 +13,14 @@ import (
 **/
 
 func InitRedis() *redis.Client {
-	return redis.NewClient(&redis.Options{
+	client := redis.NewClient(&redis.Options{
 		Addr:     global.G_CONFIG.Redis.Addr,
 		DB:       global.G_CONFIG.Redis.DB,
 		Password: global.G_CONFIG.Redis.Password,
 		Username: global.G_CONFIG.Redis.Username,
 	})
+	if _, err := client.Ping(context.Background()).Result(); err != nil {
+		panic(err)
+	}
+	return client
 }
