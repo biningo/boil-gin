@@ -41,7 +41,7 @@ func InitRedisToMySqlCron(duration time.Duration) {
 						bid, _ := strconv.Atoi(sbid)
 						err := service.InsertUserLikeBoil(uid, bid)
 						if err != nil {
-							break
+							continue
 						}
 					}
 					redisCli.Del(context.Background(), key)
