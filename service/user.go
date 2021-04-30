@@ -223,8 +223,8 @@ func GetUserFollower(uid int, loginUserId int) ([]model.UserInfoVo, error) {
 func GetUserFollowing(uid, loginUserId int) ([]model.UserInfoVo, error) {
 	db := global.G_DB
 	result, err := db.Query(
-		"SELECT user_id FROM boil_user_follow_user WHERE follower_id=? AND user_id!=?",
-		uid, loginUserId)
+		"SELECT user_id FROM boil_user_follow_user WHERE follower_id=?",
+		uid)
 	if err != nil {
 		return nil, err
 	}
