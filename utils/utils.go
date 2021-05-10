@@ -16,7 +16,7 @@ func RandInt(min int, max int) int {
 }
 
 func Rand5Str() string {
-	rand.Seed(time.Now().Unix())
+	rand.Seed(time.Now().UnixNano())
 	var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	b := make([]rune, 5)
 	for i := range b {
