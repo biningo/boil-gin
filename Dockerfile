@@ -1,12 +1,9 @@
-FROM golang:alpine as builder 
-RUN go env -w GOPROXY=https://goproxy.cn,direct
-RUN mkdir /build  
+FROM golang:1.16-alpine3.13 as builder
+ENV GOPROXY=https://goproxy.io
 ADD . /build/
-WORKDIR /build  
-RUN go build -o boil-gin main.go
-FROM alpine 
-COPY --from=builder /build/boil-gin /app/
-COPY --from=builder /build/config.yaml /app/
-EXPOSE 9090
-WORKDIR /app
-CMD ["./boil-gin"]
+WORKDIR /build
+RUN CGO_ENABLED=0 go build -a -ldflags "-s -w" -o boil /build/
+
+FROM scratch
+COPY --from=builder /build/boil /
+ENTRYPOINT ["/boil"]
