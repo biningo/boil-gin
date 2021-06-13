@@ -21,31 +21,17 @@ func InitRedisToMySqlCron(duration time.Duration) {
 			select {
 			case <-time.Tick(duration):
 				redisCli := global.RedisClient
-				redisCli.Del(context.Background(), "boil_like_count")
-				keys, err := redisCli.Keys(context.Background(), "*_like_boils").Result()
-				if err != nil {
-					continue
-				}
+				keys := redisCli.Keys(context.Background(), "%::like_boils").Val()
 				for _, key := range keys {
-					arr := strings.Split(key, "_")
-					if len(arr) < 1 {
-						continue
+					uid := strings.Split(key, "::")[1]
+					bids := redisCli.SMembers(context.Background(), key).Val()
+					for _, bid := range bids {
+						userId, _ := strconv.Atoi(uid)
+						boilId, _ := strconv.Atoi(bid)
+						service.InsertUserLikeBoil(userId, boilId)
 					}
-					suid := strings.Split(arr[0], ":")[1]
-					uid, _ := strconv.Atoi(suid)
-					bids, err := redisCli.SMembers(context.Background(), key).Result()
-					if err != nil {
-						break
-					}
-					for _, sbid := range bids {
-						bid, _ := strconv.Atoi(sbid)
-						err := service.InsertUserLikeBoil(uid, bid)
-						if err != nil {
-							continue
-						}
-					}
-					redisCli.Del(context.Background(), key)
 				}
+				//service.ClearBoilUserLike()
 			}
 		}
 	}()
