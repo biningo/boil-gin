@@ -3,6 +3,7 @@ package initialize
 import (
 	"database/sql"
 	"github.com/biningo/boil-gin/global"
+	"github.com/jmoiron/sqlx"
 	"time"
 )
 
@@ -16,8 +17,9 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-func InitDB() *sql.DB {
-	return initMySql()
+func InitDB() *sqlx.DB {
+	dbx := sqlx.NewDb(initMySql(), "mysql")
+	return dbx
 }
 
 func initMySql() *sql.DB {

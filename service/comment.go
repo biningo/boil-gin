@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"github.com/biningo/boil-gin/global"
 	"github.com/biningo/boil-gin/model"
 )
@@ -12,59 +11,26 @@ import (
 *@Describe
 **/
 
-func GetCommentBidsByUid(uid int) ([]string, error) {
-	db := global.G_DB
-	bids := []string{}
-	bid := "0"
-	result, err := db.Query("SELECT boil_id FROM boil_comment WHERE user_id=? ORDER BY create_time DESC", uid)
-	if err != nil {
-		return nil, err
+func GetCommentBidsByUid(uid int) (bids []string, err error) {
+	if err = global.G_DB.Select(&bids, "SELECT boil_id FROM boil_comment WHERE user_id=? ORDER BY create_time DESC", uid); err != nil {
+		return []string{}, err
 	}
-	for result.Next() {
-		if err := result.Scan(&bid); err != nil {
-			return []string{}, err
-		}
-		bids = append(bids, bid)
-	}
-	result.Close()
-	return bids, nil
+	return
 }
 
 func InsertComment(comment model.Comment) error {
-	db := global.G_DB
-	_, err := db.Exec("INSERT INTO boil_comment(user_id,boil_id,content,create_time) VALUE(?,?,?,?)", comment.UserID, comment.BoilID, comment.Content, comment.CreateTime)
+	_, err := global.G_DB.NamedExec("INSERT INTO boil_comment(user_id,boil_id,content,create_time) VALUE(:user_id,:boil_id,:content,:create_time)", comment)
 	return err
 }
 
 func DeleteCommentById(cid int) error {
-	db := global.G_DB
-	_, err := db.Exec("DELETE FROM boil_comment WHERE id=?", cid)
+	_, err := global.G_DB.Exec("DELETE FROM boil_comment WHERE id=?", cid)
 	return err
 }
 
-func GetComments(querySql string, args ...interface{}) ([]model.Comment, error) {
-	db := global.G_DB
-	strSql := fmt.Sprintf("SELECT id,user_id,boil_id,content,create_time FROM boil_comment WHERE %s ORDER BY create_time DESC", querySql)
-	result, err := db.Query(strSql, args...)
-	if err != nil {
-		return nil, err
-	}
-	comments := []model.Comment{}
-	comment := model.Comment{}
-	for result.Next() {
-		if err := result.Scan(&comment.ID, &comment.UserID, &comment.BoilID, &comment.Content, &comment.CreateTime); err != nil {
-			return []model.Comment{}, err
-		}
-		comments = append(comments, comment)
-	}
-	result.Close()
-	return comments, nil
-}
-
-func CommentArrToCommentVoArr(commentArr []model.Comment) ([]model.CommentVo, error) {
-	commentVoArr := []model.CommentVo{}
+func CommentArrToCommentVoArr(commentArr []model.Comment) (commentVoArr []model.CommentVo, err error) {
 	for _, comment := range commentArr {
-		commentVo := model.CommentVo{}
+		var commentVo model.CommentVo
 		commentVo.CreateTime = comment.CreateTime.Format("2006-01-02 15:04:05")
 		commentVo.ID = comment.ID
 		commentVo.BoilId = comment.BoilID
@@ -76,33 +42,22 @@ func CommentArrToCommentVoArr(commentArr []model.Comment) ([]model.CommentVo, er
 		commentVo.UserAvatarId = user.AvatarID
 		commentVoArr = append(commentVoArr, commentVo)
 	}
-	return commentVoArr, nil
+	return
 }
 
 func CountUserCommentBoil(uid int) (count int, err error) {
-	db := global.G_DB
-	result, err := db.Query("SELECT COUNT(*) FROM boil_comment WHERE user_id=?", uid)
-	if err != nil {
-		return
-	}
-	result.Next()
-	if err := result.Scan(&count); err != nil {
-		return 0, err
-	}
-	result.Close()
+	r := global.G_DB.QueryRowx("SELECT COUNT(*) FROM boil_comment WHERE user_id=?", uid)
+	err = r.Scan(&count)
 	return
 }
 
 func CountBoilComment(bid int) (count int, err error) {
-	db := global.G_DB
-	result, err := db.Query("SELECT COUNT(*) FROM boil_comment WHERE boil_id=?", bid)
-	if err != nil {
-		return
-	}
-	result.Next()
-	if err := result.Scan(&count); err != nil {
-		return 0, err
-	}
-	result.Close()
+	result := global.G_DB.QueryRowx("SELECT COUNT(*) FROM boil_comment WHERE boil_id=?", bid)
+	err = result.Scan(&count)
+	return
+}
+
+func GetCommentsByBoilId(bid string) (comments []model.Comment, err error) {
+	err = global.G_DB.Select(&comments, "SELECT id,user_id,boil_id,content,create_time FROM boil_comment WHERE boil_id=? ORDER BY create_time DESC", bid)
 	return
 }

@@ -33,8 +33,7 @@ func CommentPublish(c *gin.Context) {
 }
 
 func CommentBoilList(c *gin.Context) {
-	bid := c.Param("bid")
-	commentArr, err := service.GetComments("boil_id=?", bid)
+	commentArr, err := service.GetCommentsByBoilId(c.Param("bid"))
 	if err != nil {
 		c.JSON(500, gin.H{"msg": err.Error()})
 		return

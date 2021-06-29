@@ -5,7 +5,6 @@ import (
 	"github.com/biningo/boil-gin/service"
 	"github.com/gin-gonic/gin"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -42,8 +41,7 @@ func BoilDelete(c *gin.Context) {
 }
 
 func BoilListByTag(c *gin.Context) {
-	tid, _ := strconv.Atoi(c.Param("tid"))
-	boilArr, err := service.GetBoils("tag_id=?", tid)
+	boilArr, err := service.GetBoilsByTagId(c.Param("tid"))
 	if err != nil {
 		c.JSON(500, err.Error())
 		return
@@ -53,8 +51,7 @@ func BoilListByTag(c *gin.Context) {
 }
 
 func BoilListByUser(c *gin.Context) {
-	uid, _ := strconv.Atoi(c.Param("uid"))
-	boilArr, err := service.GetBoils("user_id=?", uid)
+	boilArr, err := service.GetBoilsByUserId(c.Param("uid"))
 	if err != nil {
 		c.JSON(500, err.Error())
 		return
@@ -74,7 +71,7 @@ func BoilListByFollowing(c *gin.Context) {
 		c.JSON(200, gin.H{"data": []model.BoilVo{}})
 		return
 	}
-	boilArr, err := service.GetBoils("user_id in " + "(" + strings.Join(followingIds, ",") + ")")
+	boilArr, err := service.GetBoilsByUserIds(followingIds)
 	if err != nil {
 		c.JSON(500, err.Error())
 		return
@@ -95,7 +92,7 @@ func BoilListUserLike(c *gin.Context) {
 }
 
 func BoilAll(c *gin.Context) {
-	boilArr, err := service.GetBoils("1=1")
+	boilArr, err := service.GetAllBoil()
 	if err != nil {
 		c.JSON(500, err.Error())
 		return
@@ -105,17 +102,12 @@ func BoilAll(c *gin.Context) {
 }
 
 func GetBoilById(c *gin.Context) {
-	bid, _ := strconv.Atoi(c.Param("bid"))
-	boilArr, err := service.GetBoils("id=?", bid)
+	boil, err := service.GetBoilById(c.Param("bid"))
 	if err != nil {
 		c.JSON(500, err.Error())
 		return
 	}
-	if len(boilArr) == 0 {
-		c.JSON(200, gin.H{"data": model.BoilVo{}})
-		return
-	}
-	boilVoArr := service.BoilArrToBoilVoArr(boilArr, c.GetInt("loginUserId"))
+	boilVoArr := service.BoilArrToBoilVoArr([]model.Boil{boil}, c.GetInt("loginUserId"))
 	c.JSON(200, gin.H{"data": boilVoArr[0]})
 }
 
@@ -130,7 +122,7 @@ func BoilListUserComment(c *gin.Context) {
 		c.JSON(200, gin.H{"data": []model.BoilVo{}})
 		return
 	}
-	boilArr, err := service.GetBoils("id in " + "(" + strings.Join(bids, ",") + ")")
+	boilArr, err := service.GetBoilsByIds(bids)
 	if err != nil {
 		c.JSON(500, gin.H{"msg": err.Error()})
 		return

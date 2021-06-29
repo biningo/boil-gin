@@ -9,9 +9,9 @@ import "time"
 **/
 
 type Comment struct {
-	ID int
-	BoilID int
-	UserID int
-	CreateTime time.Time
-	Content string
+	ID         int       `db:"id"`
+	BoilID     int       `db:"boil_id"`
+	UserID     int       `db:"user_id"`
+	CreateTime time.Time `db:"create_time"`
+	Content    string    `db:"content"`
 }

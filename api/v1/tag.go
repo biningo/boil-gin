@@ -13,7 +13,7 @@ import (
 **/
 
 func TagList(c *gin.Context) {
-	tags, err := service.GetTags("1=1")
+	tags, err := service.GetAllTags()
 	if err != nil {
 		c.JSON(500, gin.H{"msg": err.Error()})
 		return

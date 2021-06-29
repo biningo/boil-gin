@@ -7,10 +7,10 @@ package model
 **/
 
 type User struct {
-	ID       int
-	UserName string
-	PassWord string
-	AvatarID int //[1,5]
-	Salt     string
-	Bio string
+	ID       int    `db:"id"`
+	UserName string `db:"username"`
+	PassWord string `db:"password"`
+	AvatarID int    `db:"avatar_id"` //[1,5]
+	Salt     string `db:"salt"`
+	Bio      string `db:"bio"`
 }

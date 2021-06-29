@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"github.com/biningo/boil-gin/global"
 	"github.com/biningo/boil-gin/model"
-	"strconv"
-	"strings"
+	"github.com/jmoiron/sqlx"
 )
 
 /**
@@ -16,48 +15,23 @@ import (
 **/
 
 func InsertBoil(boil model.Boil) error {
-	db := global.G_DB
-	_, err := db.Exec("INSERT INTO boil_boil(tag_id,user_id,content,create_time) VALUE(?,?,?,?)",
-		boil.TagID, boil.UserID, boil.Content, boil.CreateTime)
+	_, err := global.G_DB.Exec(
+		"INSERT INTO boil_boil(tag_id,user_id,content,create_time) VALUE(:tag_id,:user_id,:content,:create_time)",
+		boil,
+	)
 	return err
 }
 
 func DeleteBoilById(bid int) error {
-	db := global.G_DB
-	_, err := db.Exec("DELETE FROM boil_boil WHERE id=?", bid)
-	if err != nil {
+	if _, err := global.G_DB.Exec("DELETE FROM boil_boil WHERE id=?", bid); err != nil {
 		return err
 	}
-	return ClearBoilUserLike(bid)
+	return ClearBoilUserLike(bid) //clear redis
 }
 
-//Also can ById
-func GetBoils(querySql string, args ...interface{}) ([]model.Boil, error) {
-	boilArr := []model.Boil{}
-	boil := model.Boil{}
-	db := global.G_DB
-	strSql := fmt.Sprintf("SELECT id,tag_id,user_id,create_time,content FROM boil_boil WHERE %s ORDER BY create_time DESC", querySql)
-	exec, err := db.Prepare(strSql)
-	if err != nil {
-		return nil, err
-	}
-	result, err := exec.Query(args...)
-	if err != nil {
-		return nil, err
-	}
-	for result.Next() {
-		err := result.Scan(&boil.ID, &boil.TagID, &boil.UserID, &boil.CreateTime, &boil.Content)
-		if err != nil {
-			return []model.Boil{}, err
-		}
-		boilArr = append(boilArr, boil)
-	}
-	result.Close()
-	return boilArr, nil
-}
 
 func BoilArrToBoilVoArr(boilArr []model.Boil, loginUserId int) []model.BoilVo {
-	boilVoArr := []model.BoilVo{}
+	var boilVoArr []model.BoilVo
 	for _, boil := range boilArr {
 		boilVo := model.BoilVo{}
 		boilVo.ID = boil.ID
@@ -69,7 +43,6 @@ func BoilArrToBoilVoArr(boilArr []model.Boil, loginUserId int) []model.BoilVo {
 		boilVo.CreateTime = boil.CreateTime.Format("2006-01-02 15:04:05")
 		boilVo.UserID = boil.UserID
 		boilVo.TagTitle, _ = GetTagTitleById(boilVo.TagID)
-
 		user, _ := GetUserById(boilVo.UserID)
 		boilVo.UserName = user.UserName
 		boilVo.UserBio = user.Bio
@@ -97,62 +70,36 @@ func BoilUserUnLike(bid, uid int) error {
 }
 
 func CountBoilLike(bid int) (int, error) {
-	redisCli := global.RedisClient
-	db := global.G_DB
-	//redis
-	countRedis := redisCli.SCard(context.Background(), fmt.Sprintf("boil::%d::like_users", bid)).Val()
-	//mysql
-	r, err := db.Query("SELECT COUNT(*) FROM boil_user_like_boil WHERE boil_id=?", bid)
-	if err != nil {
-		return 0, err
-	}
+	countRedis := global.RedisClient.SCard(context.Background(), fmt.Sprintf("boil::%d::like_users", bid)).Val()
+	r := global.G_DB.QueryRowx("SELECT COUNT(*) FROM boil_user_like_boil WHERE boil_id=?", bid)
 	countDB := 0
-	r.Next()
-	err = r.Scan(&countDB)
-	if err != nil {
+	if err := r.Scan(&countDB); err != nil {
 		return 0, err
 	}
-	r.Close()
 	return int(countRedis) + countDB, nil
 }
 func CountUserLikeBoil(uid int) (int, error) {
 	redisCli := global.RedisClient
 	db := global.G_DB
-
 	countRedis := redisCli.SCard(context.Background(), fmt.Sprintf("user::%d::like_boils", uid)).Val()
-	r, err := db.Query("SELECT COUNT(*) FROM boil_user_like_boil WHERE user_id=?", uid)
-	if err != nil {
-		return 0, err
-	}
-	r.Next()
+	r := db.QueryRowx("SELECT COUNT(*) FROM boil_user_like_boil WHERE user_id=?", uid)
 	countDB := 0
-	err = r.Scan(&countDB)
-	if err != nil {
+	if err := r.Scan(&countDB); err != nil {
 		return 0, err
 	}
-	r.Close()
-	return int(countRedis) + countDB, err
+	return int(countRedis) + countDB, nil
 }
 
 func BoilUserIsLike(bid, uid int) bool {
-	redisCli := global.RedisClient
-	result := redisCli.SIsMember(context.Background(), fmt.Sprintf("user::%d::like_boils", uid), bid).Val()
-	if result {
+	if result := global.RedisClient.SIsMember(context.Background(), fmt.Sprintf("user::%d::like_boils", uid), bid).Val(); result {
 		return result
 	}
 	//if redis does not exist then query mysql
-	db := global.G_DB
 	count := 0
-	r, err := db.Query("SELECT COUNT(*) FROM boil_user_like_boil WHERE boil_id=? AND user_id=?", bid, uid)
-	if err != nil {
+	r := global.G_DB.QueryRowx("SELECT COUNT(*) FROM boil_user_like_boil WHERE boil_id=? AND user_id=?", bid, uid)
+	if err := r.Scan(&count); err != nil {
 		return false
 	}
-	r.Next()
-	err = r.Scan(&count)
-	if err != nil {
-		return false
-	}
-	r.Close()
 	return count > 0
 }
 
@@ -166,57 +113,73 @@ func ClearBoilUserLike(bid int) error {
 	return nil
 }
 
-func BoilListUserLike(uid int) ([]model.Boil, error) {
+func BoilListUserLike(uid int) (boils []model.Boil, err error) {
 	redisCli := global.RedisClient
 	bids := redisCli.SMembers(context.Background(), fmt.Sprintf("user::%s::like_boils", uid)).Val()
-	db := global.G_DB
-	r, err := db.Query("SELECT boil_id FROM boil_user_like_boil WHERE user_id=?", uid)
-	if err != nil {
-		return nil, err
+	if err = global.G_DB.Select(&bids, "SELECT boil_id FROM boil_user_like_boil WHERE user_id=?", uid); err != nil {
+		return []model.Boil{}, err
 	}
-	for r.Next() {
-		bid := 0
-		err := r.Scan(&bid)
-		if err != nil {
-			return []model.Boil{}, err
-		}
-		bids = append(bids, strconv.Itoa(bid))
-	}
-	r.Close()
 	if len(bids) == 0 {
-		return nil, nil
+		return []model.Boil{}, nil
 	}
-	boilArr, err := GetBoils("id in " + "(" + strings.Join(bids, ",") + ")")
-	if err != nil {
-		return nil, err
+	boilsSql, args, err := sqlx.In(
+		"SELECT id,tag_id,user_id,create_time,content FROM boil_boil WHERE id in (?) ORDER BY create_time DESC", bids)
+	if err = global.G_DB.Select(&boils, boilsSql, args); err != nil {
+		return []model.Boil{}, err
 	}
-	return boilArr, nil
+	return
 }
 
 func InsertUserLikeBoil(uid, bid int) error {
-	db := global.G_DB
-	_, err := db.Exec("INSERT INTO boil_user_like_boil(user_id,boil_id) VALUE (?,?)", uid, bid)
+	_, err := global.G_DB.Exec("INSERT INTO boil_user_like_boil(user_id,boil_id) VALUE (?,?)", uid, bid)
 	return err
 }
 func DeleteUserLikeBoil(uid, bid int) error {
-	db := global.G_DB
-	_, err := db.Exec("DELETE FROM boil_user_like_boil WHERE user_id=? AND boil_id=?", uid, bid)
+	_, err := global.G_DB.Exec("DELETE FROM boil_user_like_boil WHERE user_id=? AND boil_id=?", uid, bid)
 	return err
 }
 
 //like end
 
 func CountUserBoil(uid int) (count int, err error) {
-	db := global.G_DB
-	result, err := db.Query("SELECT COUNT(*) FROM boil_boil WHERE user_id=?", uid)
+	r := global.G_DB.QueryRowx("SELECT COUNT(*) FROM boil_boil WHERE user_id=?", uid)
+	err = r.Scan(&count)
+	return
+}
+
+func GetBoilsByTagId(tid string) (boils []model.Boil, err error) {
+	err = global.G_DB.Select(&boils, "SELECT id,tag_id,user_id,create_time,content FROM boil_boil WHERE tag_id=? ORDER BY create_time DESC", tid)
+	return
+}
+func GetBoilsByUserId(uid string) (boils []model.Boil, err error) {
+	err = global.G_DB.Select(&boils, "SELECT id,tag_id,user_id,create_time,content FROM boil_boil WHERE user_id=? ORDER BY create_time DESC", uid)
+	return
+}
+
+func GetBoilsByUserIds(userIds []string) (boils []model.Boil, err error) {
+	querySql, args, err := sqlx.In("SELECT id,tag_id,user_id,create_time,content FROM boil_boil WHERE user_id in (?) ORDER BY create_time DESC", userIds)
 	if err != nil {
 		return
 	}
-	result.Next()
-	err = result.Scan(&count)
+	err = global.G_DB.Select(&boils, querySql, args)
+	return
+}
+
+func GetAllBoil() (boils []model.Boil, err error) {
+	err = global.G_DB.Select(&boils, "SELECT id,tag_id,user_id,create_time,content FROM boil_boil ORDER BY create_time DESC")
+	return
+}
+
+func GetBoilById(bid string) (boil model.Boil, err error) {
+	err = global.G_DB.Get(&boil, "SELECT id,tag_id,user_id,create_time,content FROM boil_boil WHERE id=? ORDER BY create_time DESC", bid)
+	return
+}
+
+func GetBoilsByIds(bids []string) (boils []model.Boil, err error) {
+	querySql, args, err := sqlx.In("SELECT id,tag_id,user_id,create_time,content FROM boil_boil WHERE id in (?) ORDER BY create_time DESC", bids)
 	if err != nil {
-		return 0, err
+		return
 	}
-	result.Close()
+	err = global.G_DB.Select(&boils, querySql, args)
 	return
 }

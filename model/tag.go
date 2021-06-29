@@ -7,6 +7,6 @@ package model
 **/
 
 type Tag struct {
-	ID int `json:"id"`
-	Title string `json:"title"`
+	ID    int    `json:"id" db:"id"`
+	Title string `json:"title" db:"title"`
 }

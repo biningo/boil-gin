@@ -7,8 +7,8 @@ import (
 	"github.com/biningo/boil-gin/model"
 	"github.com/biningo/boil-gin/utils"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/jmoiron/sqlx"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -18,56 +18,30 @@ import (
 *@Describe
 **/
 
-func GetUserById(uid int) (model.User, error) {
-	db := global.G_DB
-	result, err := db.Query("SELECT username,bio,avatar_id FROM boil_user WHERE id=?", uid)
-	if err != nil {
-		return model.User{}, err
-	}
-	defer result.Close()
-	user := model.User{}
-	result.Next()
-	result.Scan(&user.UserName, &user.Bio, &user.AvatarID)
-	result.Close()
-	return user, nil
+func GetUserById(uid int) (user model.User, err error) {
+	err = global.G_DB.Get(&user, "SELECT username,bio,avatar_id FROM boil_user WHERE id=?", uid)
+	return
 }
 
 func GetUserByName(username string) (user model.User, err error) {
-	db := global.G_DB
-	exec, _ := db.Prepare("SELECT id,username,password,bio,avatar_id,salt FROM boil_user WHERE username=?")
-	result, err := exec.Query(username)
-	if err != nil {
-		return
-	}
-	result.Next()
-	result.Scan(&user.ID, &user.UserName, &user.PassWord, &user.Bio, &user.AvatarID, &user.Salt)
-	result.Close()
+	err = global.G_DB.Get(&user, "SELECT id,username,password,bio,avatar_id,salt FROM boil_user WHERE username=?", username)
 	return
 }
 
 func UpdateUserBio(uid int, bio string) error {
-	db := global.G_DB
-	_, err := db.Exec("UPDATE boil_user SET bio=? WHERE id=?", bio, uid)
+	_, err := global.G_DB.Exec("UPDATE boil_user SET bio=? WHERE id=?", bio, uid)
 	return err
 }
 
 func InsertUser(user model.User) error {
-	db := global.G_DB
-	_, err := db.Exec(
-		"INSERT INTO boil_user(username,password,avatar_id,salt,bio) VALUE(?,?,?,?,?)",
-		user.UserName, user.PassWord, user.AvatarID, user.Salt, user.Bio)
+	_, err := global.G_DB.Exec(
+		"INSERT INTO boil_user(username,password,avatar_id,salt,bio) VALUE(:username,:password,:avatar_id,:salt,:bio)", user)
 	return err
 }
 
 func CountUserByName(username string) (count int, err error) {
-	db := global.G_DB
-	result, err := db.Query("SELECT COUNT(*) FROM boil_user WHERE username=?", username)
-	if err != nil {
-		return 0, nil
-	}
-	result.Next()
-	result.Scan(&count)
-	result.Close()
+	r := global.G_DB.QueryRowx("SELECT COUNT(*) FROM boil_user WHERE username=?", username)
+	err = r.Scan(&count)
 	return
 }
 
@@ -129,68 +103,48 @@ func GetUserInfoById(uid int, loginUserId int) (userInfoVo model.UserInfoVo, err
 }
 
 func InsertUserFollow(followerId, uid int) error {
-	db := global.G_DB
-	_, err := db.Exec("INSERT INTO boil_user_follow_user(follower_id,user_id) value (?,?)", followerId, uid)
+	_, err := global.G_DB.Exec("INSERT INTO boil_user_follow_user(follower_id,user_id) value (?,?)", followerId, uid)
 	return err
 }
 
 func DeleteUserFollow(followerId, uid int) error {
-	db := global.G_DB
-	_, err := db.Exec("DELETE  FROM boil_user_follow_user WHERE follower_id=? AND user_id=?", followerId, uid)
+	_, err := global.G_DB.Exec("DELETE  FROM boil_user_follow_user WHERE follower_id=? AND user_id=?", followerId, uid)
 	return err
 }
 
 func CountUserFollower(uid int) (count int, err error) {
-	db := global.G_DB
-	result, err := db.Query("SELECT COUNT(*) FROM boil_user_follow_user WHERE user_id=?", uid)
-	if err != nil {
-		return 0, err
-	}
-	result.Next()
-	result.Scan(&count)
-	result.Close()
+	r := global.G_DB.QueryRowx("SELECT COUNT(*) FROM boil_user_follow_user WHERE user_id=?", uid)
+	err = r.Scan(&count)
 	return
 }
 
 func CountUserFollowing(followerId int) (count int, err error) {
-	db := global.G_DB
-	result, err := db.Query("SELECT COUNT(*) FROM boil_user_follow_user WHERE follower_id=?", followerId)
-	if err != nil {
-		return 0, err
-	}
-	result.Next()
-	result.Scan(&count)
-	result.Close()
+	r := global.G_DB.QueryRowx("SELECT COUNT(*) FROM boil_user_follow_user WHERE follower_id=?", followerId)
+	err = r.Scan(&count)
 	return
 }
 
 func IsUserFollow(followerId, uid int) (bool, error) {
-	db := global.G_DB
-	result, err := db.Query("SELECT COUNT(*) FROM boil_user_follow_user WHERE follower_id=? AND user_id=?", followerId, uid)
-	if err != nil {
+	result := global.G_DB.QueryRowx("SELECT COUNT(*) FROM boil_user_follow_user WHERE follower_id=? AND user_id=?", followerId, uid)
+	count := 0
+	if err := result.Scan(&count); err != nil {
 		return false, err
 	}
-	result.Next()
-	count := 0
-	result.Scan(&count)
-	result.Close()
 	return count > 0, nil
 }
 
-func GetUserInfoByIds(ids []string, loginUserId int) ([]model.UserInfoVo, error) {
-	if len(ids) == 0 {
-		return nil, nil
+func GetUserInfoByIds(ids []string, loginUserId int) (userInfoVoArr []model.UserInfoVo, err error) {
+	if ids == nil || len(ids) == 0 {
+		return
 	}
-	db := global.G_DB
-	result, err := db.Query(
-		"SELECT id,username,bio,avatar_id FROM boil_user WHERE " + "id in (" + strings.Join(ids, ",") + ")")
+	userInfoSql, args, err := sqlx.In("SELECT id,username,bio,avatar_id FROM boil_user WHERE id in (?)", ids)
 	if err != nil {
-		return []model.UserInfoVo{}, err
+		return nil, err
 	}
-	userInfoVo := model.UserInfoVo{}
-	userInfoVoArr := []model.UserInfoVo{}
-	for result.Next() {
-		result.Scan(&userInfoVo.ID, &userInfoVo.UserName, &userInfoVo.Bio, &userInfoVo.AvatarID)
+	if err = global.G_DB.Select(&userInfoVoArr, userInfoSql, args); err != nil {
+		return nil, err
+	}
+	for _, userInfoVo := range userInfoVoArr {
 		userInfoVo.FollowerCount, _ = CountUserFollower(userInfoVo.ID)
 		userInfoVo.FollowingCount, _ = CountUserFollowing(userInfoVo.ID)
 		userInfoVo.IsFollow, _ = IsUserFollow(loginUserId, userInfoVo.ID)
@@ -199,113 +153,60 @@ func GetUserInfoByIds(ids []string, loginUserId int) ([]model.UserInfoVo, error)
 		userInfoVo.LikeBoilCount, _ = CountUserLikeBoil(userInfoVo.ID)
 		userInfoVoArr = append(userInfoVoArr, userInfoVo)
 	}
-	result.Close()
-	return userInfoVoArr, nil
+	return
 }
 
-func GetUserFollower(uid int, loginUserId int) ([]model.UserInfoVo, error) {
-	db := global.G_DB
-	result, err := db.Query("SELECT follower_id FROM boil_user_follow_user WHERE user_id=?", uid)
-	if err != nil {
-		return nil, err
+func GetUserFollowerIds(uid int) (followerIdArr []string, err error) {
+	if err = global.G_DB.Select(&followerIdArr, "SELECT follower_id FROM boil_user_follow_user WHERE user_id=?", uid); err != nil {
+		return
 	}
-	followerIdArr := []string{}
-	for result.Next() {
-		id := "0"
-		result.Scan(&id)
-		followerIdArr = append(followerIdArr, id)
+	return
+}
+func GetUserFollowingIds(uid int) (followingIdArr []string, err error) {
+	if err = global.G_DB.Select(&followingIdArr, "SELECT user_id FROM boil_user_follow_user WHERE follower_id=?", uid); err != nil {
+		return
 	}
-	result.Close()
-	userInfoArr, err := GetUserInfoByIds(followerIdArr, loginUserId)
-	return userInfoArr, err
+	return
 }
 
-func GetUserFollowing(uid, loginUserId int) ([]model.UserInfoVo, error) {
-	db := global.G_DB
-	result, err := db.Query(
-		"SELECT user_id FROM boil_user_follow_user WHERE follower_id=?",
-		uid)
-	if err != nil {
-		return nil, err
-	}
-	followerIdArr := []string{}
-	for result.Next() {
-		id := "0"
-		result.Scan(&id)
-		followerIdArr = append(followerIdArr, id)
-	}
-	result.Close()
-	userInfoArr, err := GetUserInfoByIds(followerIdArr, loginUserId)
-	return userInfoArr, err
+func GetUserFollower(uid int, loginUserId int) (userInfoVoArr []model.UserInfoVo, err error) {
+	followerIdArr, _ := GetUserFollowerIds(uid)
+	userInfoVoArr, err = GetUserInfoByIds(followerIdArr, loginUserId)
+	return
+}
+func GetUserFollowing(uid int, loginUserId int) (userInfoVoArr []model.UserInfoVo, err error) {
+	followingIdArr, _ := GetUserFollowingIds(uid)
+	userInfoVoArr, err = GetUserInfoByIds(followingIdArr, loginUserId)
+	return
 }
 
-func GetUserFollowingIds(uid int) ([]string, error) {
-	db := global.G_DB
-	result, err := db.Query("SELECT user_id FROM boil_user_follow_user WHERE follower_id=?", uid)
-	if err != nil {
-		return nil, err
-	}
-	followerIdArr := []string{}
-	for result.Next() {
-		id := "0"
-		result.Scan(&id)
-		followerIdArr = append(followerIdArr, id)
-	}
-	result.Close()
-	return followerIdArr, nil
-}
-
-func GetRecommendUsers(loginUserId int) ([]model.UserInfoVo, error) {
+func GetRecommendUsers(loginUserId int) (userInfoVoArr []model.UserInfoVo, err error) {
 	ids, err := GetUserFollowingIds(loginUserId)
-	userInfoVoArr := []model.UserInfoVo{}
 	if err != nil {
-		return userInfoVoArr, err
+		return
 	}
 	for _, sid := range ids {
 		id, _ := strconv.Atoi(sid)
-		db := global.G_DB
-		result, err := db.Query(
+		var followerIdArr []string
+		err = global.G_DB.Select(&followerIdArr,
 			"SELECT user_id FROM boil_user_follow_user WHERE follower_id=? AND user_id!=? AND user_id NOT IN "+
 				"(SELECT user_id FROM boil_user_follow_user WHERE follower_id=?)",
 			id, loginUserId, loginUserId)
 		if err != nil {
 			return nil, err
 		}
-		followerIdArr := []string{}
-		for result.Next() {
-			id := "0"
-			result.Scan(&id)
-			followerIdArr = append(followerIdArr, id)
-		}
-		result.Close()
 		followerUserInfoVoArr, err := GetUserInfoByIds(followerIdArr, loginUserId)
 		if err != nil {
-			return []model.UserInfoVo{}, err
+			return userInfoVoArr, err
 		}
 		userInfoVoArr = append(userInfoVoArr, followerUserInfoVoArr...)
 	}
 	return userInfoVoArr, nil
 }
 
-func GetAllUser(loginUserId int) ([]model.UserInfoVo, error) {
-	db := global.G_DB
-	result, err := db.Query(
-		"SELECT id,username,bio,avatar_id FROM boil_user")
-	if err != nil {
+func GetAllUser(loginUserId int) (userInfoVoArr []model.UserInfoVo, err error) {
+	if err = global.G_DB.Select(&userInfoVoArr, "SELECT id,username,bio,avatar_id FROM boil_user"); err != nil {
 		return []model.UserInfoVo{}, err
 	}
-	userInfoVo := model.UserInfoVo{}
-	userInfoVoArr := []model.UserInfoVo{}
-	for result.Next() {
-		result.Scan(&userInfoVo.ID, &userInfoVo.UserName, &userInfoVo.Bio, &userInfoVo.AvatarID)
-		userInfoVo.FollowerCount, _ = CountUserFollower(userInfoVo.ID)
-		userInfoVo.FollowingCount, _ = CountUserFollowing(userInfoVo.ID)
-		userInfoVo.IsFollow, _ = IsUserFollow(loginUserId, userInfoVo.ID)
-		userInfoVo.BoilCount, _ = CountUserBoil(userInfoVo.ID)
-		userInfoVo.CommentBoilCount, _ = CountUserCommentBoil(userInfoVo.ID)
-		userInfoVo.LikeBoilCount, _ = CountUserLikeBoil(userInfoVo.ID)
-		userInfoVoArr = append(userInfoVoArr, userInfoVo)
-	}
-	result.Close()
 	return userInfoVoArr, nil
 }

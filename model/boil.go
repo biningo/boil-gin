@@ -9,9 +9,9 @@ import "time"
 **/
 
 type Boil struct {
-	ID int
-	TagID int
-	UserID int
-	CreateTime time.Time
-	Content string
+	ID         int       `db:"id"`
+	TagID      int       `db:"tag_id"`
+	UserID     int       `db:"user_id"`
+	CreateTime time.Time `db:"create_time"`
+	Content    string    `db:"content"`
 }
