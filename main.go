@@ -19,5 +19,5 @@ func main() {
 	global.Routers = initialize.InitRouter()
 	global.RedisClient = initialize.InitRedis()
 	initialize.InitRedisToMySqlCron(time.Hour * 2)
-	server.RunServer(global.G_CONFIG.Server.Addr, global.Routers)
+	server.Run(global.G_CONFIG.Server.Addr, global.Routers)
 }

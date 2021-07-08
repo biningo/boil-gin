@@ -15,7 +15,7 @@ import (
 *@Date 2/20/21 15:22
 *@Describe
 **/
-func RunServer(addr string, handler http.Handler) {
+func Run(addr string, handler http.Handler) {
 	srv := &http.Server{
 		Addr:    addr,
 		Handler: handler,
