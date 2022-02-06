@@ -13,3 +13,6 @@ services:
     image: "mysql:8.0"
     environment:
       MYSQL_ROOT_PASSWORD: "55555"
+    volumes:
+    - /root/docker-program/mysql-8.0/conf.d:/etc/mysql/conf.d
+    - /root/docker-program/mysql-8.0/mysql-data:/var/lib/mysql
