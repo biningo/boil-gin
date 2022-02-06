@@ -18,4 +18,4 @@ redis:
   addr: redis:6379
   db: 0
   username:
-  password: 55555
+  password:
