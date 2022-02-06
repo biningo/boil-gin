@@ -8,6 +8,8 @@ services:
       - redis
       - mysql
     restart: on-failure
+    volumes:
+    - /root/docker-program/boil-gin/config.yaml:/config.yaml
   redis:
     image: "redis:6.2.2"
   mysql:
