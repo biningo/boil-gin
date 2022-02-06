@@ -7,6 +7,7 @@ services:
     depends_on:
       - redis
       - mysql
+    restart: on-failure
   redis:
     image: "redis:6.2.2"
   mysql:
@@ -14,5 +15,5 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: "55555"
     volumes:
-    - /root/docker-program/mysql-8.0/conf.d:/etc/mysql/conf.d
-    - /root/docker-program/mysql-8.0/mysql-data:/var/lib/mysql
+      - /root/docker-program/mysql-8.0/conf.d:/etc/mysql/conf.d
+      - /root/docker-program/mysql-8.0/mysql-data:/var/lib/mysql
