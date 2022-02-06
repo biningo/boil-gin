@@ -7,7 +7,7 @@ mysql:
   collation: utf8_general_ci
 
 server:
-  addr: localhost:8080
+  addr: 0.0.0.0:9090
   mode: debug
 
 jwt:

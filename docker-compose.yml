@@ -3,7 +3,7 @@ services:
   boil:
     build: .
     ports:
-      - 8080:8080
+      - 9090:9090
     depends_on:
       - redis
       - mysql
