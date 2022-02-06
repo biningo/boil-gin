@@ -3,7 +3,10 @@ services:
   boil:
     build: .
     ports:
-    - 9090:9090
+      - 9090:9090
+    depends_on:
+      - redis
+      - mysql
   redis:
     image: "redis:6.2.2"
   mysql:
