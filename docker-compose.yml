@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  boil:
+    build: .
+    ports:
+    - 9090:9090
+  redis:
+    image: "redis:6.2.2"
+  mysql:
+    image: "mysql:8.0"
+    environment:
+      MYSQL_ROOT_PASSWORD: "55555"
