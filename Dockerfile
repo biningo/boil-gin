@@ -6,4 +6,5 @@ RUN CGO_ENABLED=0 go build -a -ldflags "-s -w" -o boil /build/
 
 FROM scratch
 COPY --from=builder /build/boil /
+EXPOSE 8080
 ENTRYPOINT ["/boil"]
